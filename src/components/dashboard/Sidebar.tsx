@@ -20,6 +20,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, onMenuChange }) => {
       ],
     },
     {
+      id: 'buyer',
+      label: 'Buyer',
+      hasDropdown: false,
+    },
+    {
       id: 'trip',
       label: 'Trip',
       hasDropdown: false,
