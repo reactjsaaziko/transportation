@@ -4,6 +4,7 @@ import Header from '../../components/dashboard/Header';
 import Sidebar from '../../components/dashboard/Sidebar';
 import CHASidebar from '../../components/dashboard/CHASidebar';
 import WarehouseSidebar from '../../components/dashboard/WarehouseSidebar';
+import FreightSidebar from '../../components/freight/FreightSidebar';
 import ServiceTabs from '../../components/dashboard/ServiceTabs';
 import FloatingSupport from '../../components/common/FloatingSupport';
 import AddNewVehicle from '../../components/Domestraction transportiton/vehicle/AddNewVehicle';
@@ -18,6 +19,17 @@ import CHAOrders from '../../components/CHA/CHAOrders';
 import WarehouseFacilities from '../../components/warehouse/WarehouseFacilities';
 import WarehouseAccountTable from '../../components/warehouse/WarehouseAccountTable';
 import WarehouseOrders from '../../components/warehouse/WarehouseOrders';
+import WarehouseContact from '../../components/warehouse/WarehouseContact';
+import FreightService from '../../components/freight/FreightService';
+import FreightOrders from '../../components/freight/FreightOrders';
+import FreightOrderDetails from '../../components/freight/FreightOrderDetails';
+import FreightContact from '../../components/freight/FreightContact';
+import InspectionForm from '../../components/inspection/InspectionForm';
+import InspectionResults from '../../components/inspection/InspectionResults';
+import InspectionSidebar from '../../components/inspection/InspectionSidebar';
+import InspectionOrders from '../../components/inspection/InspectionOrders';
+import InspectionOrderDetails from '../../components/inspection/InspectionOrderDetails';
+import InspectionContact from '../../components/inspection/InspectionContact';
 
 const warehouseMenuIds = new Set([
   'manage-warehouse',
@@ -28,14 +40,37 @@ const warehouseMenuIds = new Set([
 ]);
 
 const chaPrimaryMenuIds = new Set(['service', 'order']);
+const inspectionMenuIds = new Set([
+  'inspection-service',
+  'inspection-order',
+  'inspection-buyer',
+  'inspection-contact',
+  'inspection-ai',
+]);
+const freightMenuIds = new Set([
+  'freight-service',
+  'freight-order',
+  'freight-contact',
+  'freight-ai',
+]);
 
 const getDefaultMenuForTab = (tab: string) => {
   if (tab === 'CHA') return 'service';
   if (tab === 'Warehouse') return 'manage-warehouse';
+  if (tab === 'Freight Forwarding') return 'freight-service';
+  if (tab === 'Inspection') return 'inspection-service';
   return 'add-vehicle';
 };
 
 const WarehousePlaceholder = ({ title }: { title: string }) => (
+  <div className="py-20 text-center text-gray-500">{title} page coming soon</div>
+);
+
+const InspectionPlaceholder = ({ title }: { title: string }) => (
+  <div className="py-20 text-center text-gray-500">{title} page coming soon</div>
+);
+
+const FreightPlaceholder = ({ title }: { title: string }) => (
   <div className="py-20 text-center text-gray-500">{title} page coming soon</div>
 );
 
@@ -78,9 +113,17 @@ const Dashboard = () => {
       if (!warehouseMenuIds.has(currentMenu)) {
         navigate('/dashboard/manage-warehouse', { replace: true });
       }
+    } else if (activeTab === 'Freight Forwarding') {
+      if (!freightMenuIds.has(currentMenu)) {
+        navigate('/dashboard/freight-service', { replace: true });
+      }
+    } else if (activeTab === 'Inspection') {
+      if (!inspectionMenuIds.has(currentMenu)) {
+        navigate('/dashboard/inspection-service', { replace: true });
+      }
     } else if (activeTab === 'Domestic Transportation') {
       // Navigate to add-vehicle for Domestic Transportation
-      if (warehouseMenuIds.has(currentMenu) || chaPrimaryMenuIds.has(currentMenu)) {
+      if (warehouseMenuIds.has(currentMenu) || chaPrimaryMenuIds.has(currentMenu) || inspectionMenuIds.has(currentMenu) || freightMenuIds.has(currentMenu)) {
         navigate('/dashboard/add-vehicle', { replace: true });
       }
     }
@@ -95,6 +138,10 @@ const Dashboard = () => {
           <CHASidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
         ) : activeTab === 'Warehouse' ? (
           <WarehouseSidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
+        ) : activeTab === 'Freight Forwarding' ? (
+          <FreightSidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
+        ) : activeTab === 'Inspection' ? (
+          <InspectionSidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
         ) : (
           <Sidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
         )}
@@ -124,9 +171,29 @@ const Dashboard = () => {
                 <Route path="manage-warehouse" element={<WarehouseFacilities />} />
                 <Route path="warehouse-account" element={<WarehouseAccountTable />} />
                 <Route path="warehouse-order" element={<WarehouseOrders />} />
-                <Route path="warehouse-contact-us" element={<WarehousePlaceholder title="Warehouse contact" />} />
-                <Route path="warehouse-ai-assistant" element={<WarehousePlaceholder title="Warehouse AI assistant" />} />
+                <Route path="warehouse-contact-us" element={<WarehouseContact />} />
+                <Route path="warehouse-ai-assistant" element={<AiAssistantPanel />} />
                 <Route path="*" element={<Navigate to="/dashboard/manage-warehouse" replace />} />
+              </Routes>
+            ) : activeTab === 'Freight Forwarding' ? (
+              <Routes>
+                <Route path="freight-service" element={<FreightService />} />
+                <Route path="freight-order" element={<FreightOrders />} />
+                <Route path="freight-order/:orderId" element={<FreightOrderDetails />} />
+                <Route path="freight-contact" element={<FreightContact />} />
+                <Route path="freight-ai" element={<AiAssistantPanel />} />
+                <Route path="*" element={<Navigate to="/dashboard/freight-service" replace />} />
+              </Routes>
+            ) : activeTab === 'Inspection' ? (
+              <Routes>
+                <Route path="inspection-service" element={<InspectionForm />} />
+                <Route path="inspection-service/results" element={<InspectionResults />} />
+                <Route path="inspection-order" element={<InspectionOrders />} />
+                <Route path="inspection-order/:orderId" element={<InspectionOrderDetails />} />
+                <Route path="inspection-buyer" element={<InspectionPlaceholder title="Inspection buyer" />} />
+                <Route path="inspection-contact" element={<InspectionContact />} />
+                <Route path="inspection-ai" element={<AiAssistantPanel />} />
+                <Route path="*" element={<Navigate to="/dashboard/inspection-service" replace />} />
               </Routes>
             ) : (
               <Routes>
