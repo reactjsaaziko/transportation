@@ -45,7 +45,7 @@ const InspectionForm = () => {
 
   return (
     <div className="pb-12">
-      <div className="max-w-5xl mx-auto">
+      <div className="mx-auto w-full px-6">
         <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-2xl shadow-sm px-8 py-10 space-y-8">
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">

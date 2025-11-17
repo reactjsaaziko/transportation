@@ -1,6 +1,8 @@
-import { User, Plus } from 'lucide-react';
+import { User, Plus, Calculator } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
+  const navigate = useNavigate();
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="w-full px-4 sm:px-6 lg:px-8">
@@ -19,6 +21,15 @@ const Header = () => {
             {/* User Icon */}
             <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
               <User className="w-5 h-5 text-gray-600" />
+            </button>
+
+            {/* Load Calculator Button */}
+            <button 
+              onClick={() => navigate('/dashboard/load-calculator')}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-sm"
+            >
+              <Calculator className="w-4 h-4" />
+              <span className="text-sm font-medium">Load Calculator</span>
             </button>
 
             {/* Create Ticket Button */}

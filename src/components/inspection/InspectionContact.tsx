@@ -3,7 +3,7 @@ import { Mail, MessageCircle, Phone } from 'lucide-react';
 const InspectionContact = () => {
   return (
     <div className="pb-12">
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="mx-auto w-full space-y-6 px-6">
         <h2 className="text-lg font-semibold text-gray-700">Contact US</h2>
 
         <div className="rounded-3xl border border-gray-200 bg-white shadow-sm p-6 md:p-8">

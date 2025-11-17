@@ -5,6 +5,7 @@ import Sidebar from '../../components/dashboard/Sidebar';
 import CHASidebar from '../../components/dashboard/CHASidebar';
 import WarehouseSidebar from '../../components/dashboard/WarehouseSidebar';
 import FreightSidebar from '../../components/freight/FreightSidebar';
+import LoadCalculatorSidebar from '../../components/dashboard/LoadCalculatorSidebar';
 import ServiceTabs from '../../components/dashboard/ServiceTabs';
 import FloatingSupport from '../../components/common/FloatingSupport';
 import AddNewVehicle from '../../components/Domestraction transportiton/vehicle/AddNewVehicle';
@@ -30,6 +31,8 @@ import InspectionSidebar from '../../components/inspection/InspectionSidebar';
 import InspectionOrders from '../../components/inspection/InspectionOrders';
 import InspectionOrderDetails from '../../components/inspection/InspectionOrderDetails';
 import InspectionContact from '../../components/inspection/InspectionContact';
+import InspectionBuyer from '../../components/inspection/InspectionBuyer';
+import LoadCalculator from '../../components/Domestraction transportiton/vehicle/LoadCalculator';
 
 const warehouseMenuIds = new Set([
   'manage-warehouse',
@@ -133,8 +136,10 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="flex">
-        {/* Left Sidebar - Conditionally render based on active tab */}
-        {activeTab === 'CHA' ? (
+        {/* Left Sidebar - Conditionally render based on active tab or current menu */}
+        {currentMenu === 'load-calculator' ? (
+          <LoadCalculatorSidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
+        ) : activeTab === 'CHA' ? (
           <CHASidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
         ) : activeTab === 'Warehouse' ? (
           <WarehouseSidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
@@ -190,7 +195,7 @@ const Dashboard = () => {
                 <Route path="inspection-service/results" element={<InspectionResults />} />
                 <Route path="inspection-order" element={<InspectionOrders />} />
                 <Route path="inspection-order/:orderId" element={<InspectionOrderDetails />} />
-                <Route path="inspection-buyer" element={<InspectionPlaceholder title="Inspection buyer" />} />
+                <Route path="inspection-buyer" element={<InspectionBuyer />} />
                 <Route path="inspection-contact" element={<InspectionContact />} />
                 <Route path="inspection-ai" element={<AiAssistantPanel />} />
                 <Route path="*" element={<Navigate to="/dashboard/inspection-service" replace />} />
@@ -199,6 +204,7 @@ const Dashboard = () => {
               <Routes>
                 <Route path="add-vehicle" element={<AddNewVehicle />} />
                 <Route path="manage-vehicle" element={<ManageVehicle />} />
+                <Route path="load-calculator" element={<LoadCalculator />} />
                 <Route path="trip" element={<TripManagement />} />
                 <Route path="account" element={<AccountTripsTable />} />
                 <Route path="contact-us" element={<ContactUsCard />} />

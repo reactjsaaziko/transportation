@@ -36,7 +36,7 @@ const InspectionResults = () => {
 
   return (
     <div className="pb-12">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="mx-auto w-full space-y-6 px-6">
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
