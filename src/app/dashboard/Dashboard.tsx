@@ -31,18 +31,24 @@ import InspectionSidebar from '../../components/inspection/InspectionSidebar';
 import InspectionOrders from '../../components/inspection/InspectionOrders';
 import InspectionOrderDetails from '../../components/inspection/InspectionOrderDetails';
 import InspectionContact from '../../components/inspection/InspectionContact';
-import InspectionBuyer from '../../components/inspection/InspectionBuyer';
-import LoadCalculator from '../../components/Domestraction transportiton/vehicle/LoadCalculator';
+import BuyerPage from '../../components/buyer/BuyerPage';
+import RailBuyerPage from '../../components/buyer/RailBuyerPage';
+import AirBuyerPage from '../../components/buyer/AirBuyerPage';
+import WaterBuyerPage from '../../components/buyer/WaterBuyerPage';
+import OrderSubmission from '../../components/order/OrderSubmission';
+import InsuranceSelection from '../../components/order/InsuranceSelection';
+import QuoteComparison from '../../components/order/QuoteComparison';
 
 const warehouseMenuIds = new Set([
   'manage-warehouse',
   'warehouse-account',
   'warehouse-order',
+  'warehouse-buyer',
   'warehouse-contact-us',
   'warehouse-ai-assistant',
 ]);
 
-const chaPrimaryMenuIds = new Set(['service', 'order']);
+const chaPrimaryMenuIds = new Set(['service', 'order', 'buyer']);
 const inspectionMenuIds = new Set([
   'inspection-service',
   'inspection-order',
@@ -53,6 +59,7 @@ const inspectionMenuIds = new Set([
 const freightMenuIds = new Set([
   'freight-service',
   'freight-order',
+  'freight-buyer',
   'freight-contact',
   'freight-ai',
 ]);
@@ -126,7 +133,14 @@ const Dashboard = () => {
       }
     } else if (activeTab === 'Domestic Transportation') {
       // Navigate to add-vehicle for Domestic Transportation
-      if (warehouseMenuIds.has(currentMenu) || chaPrimaryMenuIds.has(currentMenu) || inspectionMenuIds.has(currentMenu) || freightMenuIds.has(currentMenu)) {
+      const isOtherServiceMenu =
+        currentMenu !== 'buyer' &&
+        (warehouseMenuIds.has(currentMenu) ||
+          chaPrimaryMenuIds.has(currentMenu) ||
+          inspectionMenuIds.has(currentMenu) ||
+          freightMenuIds.has(currentMenu));
+
+      if (isOtherServiceMenu) {
         navigate('/dashboard/add-vehicle', { replace: true });
       }
     }
@@ -176,6 +190,7 @@ const Dashboard = () => {
                 <Route path="manage-warehouse" element={<WarehouseFacilities />} />
                 <Route path="warehouse-account" element={<WarehouseAccountTable />} />
                 <Route path="warehouse-order" element={<WarehouseOrders />} />
+                <Route path="warehouse-buyer" element={<BuyerPage title="Warehouse buyer" />} />
                 <Route path="warehouse-contact-us" element={<WarehouseContact />} />
                 <Route path="warehouse-ai-assistant" element={<AiAssistantPanel />} />
                 <Route path="*" element={<Navigate to="/dashboard/manage-warehouse" replace />} />
@@ -185,6 +200,7 @@ const Dashboard = () => {
                 <Route path="freight-service" element={<FreightService />} />
                 <Route path="freight-order" element={<FreightOrders />} />
                 <Route path="freight-order/:orderId" element={<FreightOrderDetails />} />
+                <Route path="freight-buyer" element={<BuyerPage title="Freight buyer" />} />
                 <Route path="freight-contact" element={<FreightContact />} />
                 <Route path="freight-ai" element={<AiAssistantPanel />} />
                 <Route path="*" element={<Navigate to="/dashboard/freight-service" replace />} />
@@ -195,7 +211,7 @@ const Dashboard = () => {
                 <Route path="inspection-service/results" element={<InspectionResults />} />
                 <Route path="inspection-order" element={<InspectionOrders />} />
                 <Route path="inspection-order/:orderId" element={<InspectionOrderDetails />} />
-                <Route path="inspection-buyer" element={<InspectionBuyer />} />
+                <Route path="inspection-buyer" element={<BuyerPage title="Inspection buyer" />} />
                 <Route path="inspection-contact" element={<InspectionContact />} />
                 <Route path="inspection-ai" element={<AiAssistantPanel />} />
                 <Route path="*" element={<Navigate to="/dashboard/inspection-service" replace />} />
@@ -209,6 +225,13 @@ const Dashboard = () => {
                 <Route path="account" element={<AccountTripsTable />} />
                 <Route path="contact-us" element={<ContactUsCard />} />
                 <Route path="ai-assistant" element={<AiAssistantPanel />} />
+                <Route path="buyer" element={<BuyerPage title="Buyer" />} />
+                <Route path="rail-buyer" element={<RailBuyerPage />} />
+                <Route path="air-buyer" element={<AirBuyerPage />} />
+                <Route path="water-buyer" element={<WaterBuyerPage />} />
+                <Route path="order-submission" element={<OrderSubmission />} />
+                <Route path="insurance-selection" element={<InsuranceSelection />} />
+                <Route path="quote-comparison" element={<QuoteComparison />} />
                 {/* CHA Routes */}
                 <Route path="service" element={<CHAForm />} />
                 <Route path="order" element={<CHAOrders />} />
