@@ -8,6 +8,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ activeMenu, onMenuChange }) => {
   const [isVehicleOpen, setIsVehicleOpen] = useState(false);
+  const [isBuyerOpen, setIsBuyerOpen] = useState(false);
 
   const menuItems = [
     {
@@ -22,7 +23,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, onMenuChange }) => {
     {
       id: 'buyer',
       label: 'Buyer',
-      hasDropdown: false,
+      hasDropdown: true,
+      subItems: [
+        { id: 'buyer', label: 'Road' },
+        { id: 'rail-buyer', label: 'Rail' },
+        { id: 'air-buyer', label: 'Air' },
+        { id: 'water-buyer', label: 'Water' },
+      ],
     },
     {
       id: 'trip',
@@ -58,7 +65,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, onMenuChange }) => {
               {item.hasDropdown ? (
                 <>
                   <button
-                    onClick={() => setIsVehicleOpen((prev) => !prev)}
+                    onClick={() => {
+                      if (item.id === 'vehicle') {
+                        setIsVehicleOpen((prev) => !prev);
+                      } else if (item.id === 'buyer') {
+                        setIsBuyerOpen((prev) => !prev);
+                      }
+                    }}
                     className={`w-full flex items-center justify-between px-4 py-2.5 text-sm rounded-lg transition-colors ${
                       isSectionActive
                         ? 'bg-blue-500 text-white'
@@ -68,11 +81,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, onMenuChange }) => {
                     <span className="font-medium">{item.label}</span>
                     <ChevronDown
                       className={`w-4 h-4 transition-transform ${
-                        isVehicleOpen ? 'rotate-180' : ''
+                        (item.id === 'vehicle' && isVehicleOpen) || (item.id === 'buyer' && isBuyerOpen) ? 'rotate-180' : ''
                       }`}
                     />
                   </button>
-                  {isVehicleOpen && item.subItems && (
+                  {((item.id === 'vehicle' && isVehicleOpen) || (item.id === 'buyer' && isBuyerOpen)) && item.subItems && (
                     <div className="mt-2 space-y-1">
                       {item.subItems.map((subItem) => (
                         <button
