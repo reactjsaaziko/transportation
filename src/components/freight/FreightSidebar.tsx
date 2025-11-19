@@ -7,13 +7,12 @@ const FreightSidebar = ({ activeMenu, onMenuChange }: FreightSidebarProps) => {
   const menuItems = [
     { id: 'freight-service', label: 'Service' },
     { id: 'freight-order', label: 'Order' },
-    { id: 'freight-buyer', label: 'Buyer' },
     { id: 'freight-contact', label: 'Contact us' },
     { id: 'freight-ai', label: 'AI Assistant' },
   ];
 
   return (
-    <div className="w-[18rem] min-h-screen border-r border-gray-200 bg-white">
+    <div className="w-[22rem] min-h-screen border-r border-gray-200 bg-white">
       <div className="p-4 space-y-2">
         {menuItems.map((item) => (
           <button

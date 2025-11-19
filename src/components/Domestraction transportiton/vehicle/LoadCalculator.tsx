@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Copy, Settings, FileDown, FileUp, X } from 'lucide-react';
+import CargoDesignModal from './CargoDesignModal';
+import ContainerSelectionModal from './ContainerSelectionModal';
 
 interface ProductRow {
   id: string;
@@ -24,6 +27,7 @@ interface ProductRow {
 type RollPlacement = 'square' | 'hexagon';
 
 const LoadCalculator = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'product' | 'containers' | 'stuffing'>('product');
   const [products, setProducts] = useState<ProductRow[]>([
     {
@@ -112,7 +116,11 @@ const LoadCalculator = () => {
   const [openPopover, setOpenPopover] = useState<'add-group' | 'import' | 'export' | 'upgrade' | null>(null);
   const actionAreaRef = useRef<HTMLDivElement | null>(null);
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
+  const [isCargoDesignOpen, setIsCargoDesignOpen] = useState(false);
+  const [isContainerSelectionOpen, setIsContainerSelectionOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [automaticContainerSelection, setAutomaticContainerSelection] = useState(true);
+  const [containers, setContainers] = useState<any[]>([]);
   const [settingsForm, setSettingsForm] = useState({
     lengthUnit: 'mm',
     massUnit: 'kg',
@@ -264,6 +272,56 @@ const LoadCalculator = () => {
     }
   };
 
+  const CylinderIcon = ({ placement }: { placement: RollPlacement }) => {
+    const squarePositions = [
+      { x: 4, y: 0 },
+      { x: 28, y: 0 },
+      { x: 52, y: 0 },
+      { x: 4, y: 26 },
+      { x: 28, y: 26 },
+      { x: 52, y: 26 },
+    ];
+
+    const hexPositions = [
+      { x: 16, y: 0 },
+      { x: 40, y: 0 },
+      { x: 64, y: 0 },
+      { x: 4, y: 26 },
+      { x: 28, y: 26 },
+      { x: 52, y: 26 },
+      { x: 76, y: 26 },
+    ];
+
+    const positions = placement === 'square' ? squarePositions : hexPositions;
+    const bottomOffset = placement === 'square' ? 0 : 8;
+
+    return (
+      <svg viewBox="0 0 100 70" className="h-24 w-24" aria-hidden focusable="false">
+        <defs>
+          <linearGradient id={`cylinder-body-${placement}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#dfe9fb" />
+            <stop offset="100%" stopColor="#b9cff3" />
+          </linearGradient>
+        </defs>
+        {positions.map((pos, index) => (
+          <g key={`${placement}-${index}`} transform={`translate(${pos.x} ${pos.y + (index >= positions.length / 2 ? bottomOffset : 0)})`}>
+            <ellipse cx="12" cy="5" rx="12" ry="5" fill="#eaf2ff" stroke="#8ab2ec" strokeWidth="0.8" />
+            <rect
+              x="0"
+              y="5"
+              width="24"
+              height="26"
+              fill={`url(#cylinder-body-${placement})`}
+              stroke="#8ab2ec"
+              strokeWidth="0.8"
+            />
+            <ellipse cx="12" cy="31" rx="12" ry="5" fill="#c2d7f5" stroke="#8ab2ec" strokeWidth="0.8" />
+          </g>
+        ))}
+      </svg>
+    );
+  };
+
   return (
     <div className="pb-12">
       <div className="mx-auto w-full px-6">
@@ -397,7 +455,11 @@ const LoadCalculator = () => {
                   </thead>
                   <tbody>
                     {products.map((product) => (
-                      <tr key={product.id} className="border-b border-gray-100">
+                      <tr 
+                        key={product.id} 
+                        className="border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => navigate(`/dashboard/container-details/${product.id}`)}
+                      >
                         <td className="px-3 py-3">
                           <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
                             <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -405,7 +467,7 @@ const LoadCalculator = () => {
                             </svg>
                           </div>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
                             <input
                               type="text"
@@ -415,7 +477,7 @@ const LoadCalculator = () => {
                             <span className="text-xs text-gray-400">{product.lengthUnit}</span>
                           </div>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
                             <input
                               type="text"
@@ -426,7 +488,7 @@ const LoadCalculator = () => {
                             <span className="text-xs text-gray-400">{product.lengthUnit}</span>
                           </div>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
                             <input
                               type="text"
@@ -437,7 +499,7 @@ const LoadCalculator = () => {
                             <span className="text-xs text-gray-400">{product.widthUnit}</span>
                           </div>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
                             <input
                               type="text"
@@ -448,7 +510,7 @@ const LoadCalculator = () => {
                             <span className="text-xs text-gray-400">{product.heightUnit}</span>
                           </div>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
                             <input
                               type="text"
@@ -459,7 +521,7 @@ const LoadCalculator = () => {
                             <span className="text-xs text-gray-400">{product.weightUnit}</span>
                           </div>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
                             <input
                               type="text"
@@ -469,7 +531,7 @@ const LoadCalculator = () => {
                             <span className="text-xs text-gray-400">{product.quantityUnit}</span>
                           </div>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
                             <div
                               className="h-8 w-8 rounded-full border-2 border-gray-200 cursor-pointer"
@@ -478,13 +540,16 @@ const LoadCalculator = () => {
                             <button
                               className="rounded-lg p-1 text-blue-500 hover:bg-blue-50"
                               type="button"
-                              onClick={() => openColorSettings(product)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openColorSettings(product);
+                              }}
                             >
                               <Settings className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
                             <input
                               type="text"
@@ -533,9 +598,117 @@ const LoadCalculator = () => {
 
           {activeTab === 'containers' && (
             <div className="p-6">
-              <div className="py-20 text-center text-gray-500">
-                <p className="text-lg font-medium">Containers & Trucks</p>
-                <p className="mt-2 text-sm">Configure your containers and trucks here</p>
+              {/* Action Buttons */}
+              <div className="mb-6 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsContainerSelectionOpen(true)}
+                    className="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-600"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Container
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsContainerSelectionOpen(true)}
+                    className="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-600"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Truck
+                  </button>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="automatic-container"
+                    checked={automaticContainerSelection}
+                    onChange={(e) => setAutomaticContainerSelection(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-2 focus:ring-blue-500"
+                  />
+                  <label htmlFor="automatic-container" className="text-sm font-medium text-gray-700 cursor-pointer">
+                    Automatic Container Selection
+                  </label>
+                </div>
+              </div>
+
+              {/* Empty State */}
+              {containers.length === 0 && (
+                <div className="flex min-h-[400px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 py-16">
+                  {/* Transport Illustration */}
+                  <div className="mb-6">
+                    <svg viewBox="0 0 200 140" className="h-40 w-40">
+                      <defs>
+                        <linearGradient id="platformGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#dbeafe" />
+                          <stop offset="100%" stopColor="#bfdbfe" />
+                        </linearGradient>
+                        <linearGradient id="containerGradient1" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#60a5fa" />
+                          <stop offset="100%" stopColor="#3b82f6" />
+                        </linearGradient>
+                        <linearGradient id="containerGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#93c5fd" />
+                          <stop offset="100%" stopColor="#60a5fa" />
+                        </linearGradient>
+                        <filter id="shadow">
+                          <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.15"/>
+                        </filter>
+                      </defs>
+                      
+                      {/* Platform/Base */}
+                      <ellipse cx="100" cy="120" rx="80" ry="12" fill="url(#platformGradient)" opacity="0.6" />
+                      
+                      {/* Container 1 (Back) */}
+                      <g filter="url(#shadow)">
+                        <path d="M 50 70 L 90 70 L 90 110 L 50 110 Z" fill="url(#containerGradient2)" stroke="#2563eb" strokeWidth="1.5" />
+                        <path d="M 90 70 L 105 62 L 105 102 L 90 110 Z" fill="#1e40af" stroke="#2563eb" strokeWidth="1.5" />
+                        <path d="M 50 70 L 90 70 L 105 62 L 65 62 Z" fill="#93c5fd" stroke="#2563eb" strokeWidth="1.5" />
+                        {/* Container details */}
+                        {[...Array(4)].map((_, i) => (
+                          <line key={`c1-${i}`} x1={58 + i * 10} y1={75} x2={58 + i * 10} y2={105} stroke="#2563eb" strokeWidth="1" opacity="0.3" />
+                        ))}
+                      </g>
+                      
+                      {/* Container 2 (Front) */}
+                      <g filter="url(#shadow)">
+                        <path d="M 95 60 L 145 60 L 145 105 L 95 105 Z" fill="url(#containerGradient1)" stroke="#1d4ed8" strokeWidth="1.5" />
+                        <path d="M 145 60 L 163 51 L 163 96 L 145 105 Z" fill="#1e3a8a" stroke="#1d4ed8" strokeWidth="1.5" />
+                        <path d="M 95 60 L 145 60 L 163 51 L 113 51 Z" fill="#60a5fa" stroke="#1d4ed8" strokeWidth="1.5" />
+                        {/* Container details */}
+                        {[...Array(5)].map((_, i) => (
+                          <line key={`c2-${i}`} x1={105 + i * 10} y1={65} x2={105 + i * 10} y2={100} stroke="#1d4ed8" strokeWidth="1" opacity="0.3" />
+                        ))}
+                        {/* Door handles */}
+                        <circle cx="115" cy="82" r="2" fill="#1e3a8a" />
+                        <circle cx="135" cy="82" r="2" fill="#1e3a8a" />
+                      </g>
+                      
+                      {/* Accent elements */}
+                      <circle cx="70" cy="115" r="3" fill="#3b82f6" opacity="0.6" />
+                      <circle cx="120" cy="110" r="3" fill="#3b82f6" opacity="0.6" />
+                    </svg>
+                  </div>
+                  
+                  <p className="text-base font-medium text-gray-600">Please add transport</p>
+                </div>
+              )}
+
+              {/* Navigation Buttons */}
+              <div className="mt-8 flex items-center justify-center gap-4">
+                <button
+                  onClick={() => setActiveTab('product')}
+                  className="rounded-lg px-8 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={() => setActiveTab('stuffing')}
+                  className="rounded-lg bg-blue-500 px-8 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-600"
+                >
+                  Next
+                </button>
               </div>
             </div>
           )}
@@ -633,38 +806,42 @@ const LoadCalculator = () => {
 
               <div>
                 <p className="text-sm font-medium text-gray-700">Roll Placement</p>
-                <div className="mt-3 grid gap-4 md:grid-cols-2">
+                <div className="mt-3 grid gap-6 md:grid-cols-2">
                   {(['square', 'hexagon'] as RollPlacement[]).map((placement) => {
                     const isActive = settingsForm.rollPlacement === placement;
                     return (
-                      <button
+                      <label
                         key={placement}
-                        type="button"
-                        onClick={() =>
-                          setSettingsForm((prev) => ({ ...prev, rollPlacement: placement }))
-                        }
-                        className={`flex flex-col items-center gap-3 rounded-2xl border px-4 py-4 transition ${
-                          isActive
-                            ? 'border-blue-500 bg-blue-50 shadow-sm'
-                            : 'border-gray-200 hover:border-blue-200'
+                        className={`flex flex-col items-center rounded-2xl border px-6 py-6 text-center transition ${
+                          isActive ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-200'
                         }`}
                       >
-                        <div className="grid grid-cols-3 gap-1">
-                          {Array.from({ length: 9 }).map((_, index) => (
+                        <input
+                          type="radio"
+                          name="roll-placement"
+                          value={placement}
+                          checked={isActive}
+                          onChange={() =>
+                            setSettingsForm((prev) => ({ ...prev, rollPlacement: placement }))
+                          }
+                          className="sr-only"
+                        />
+                        <CylinderIcon placement={placement} />
+                        <div className="mt-4 flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
+                          <span
+                            className={`inline-flex h-4 w-4 items-center justify-center rounded-full border ${
+                              isActive ? 'border-blue-500' : 'border-gray-300'
+                            }`}
+                          >
                             <span
-                              key={`${placement}-${index}`}
-                              className={`h-5 w-5 rounded-full ${
-                                placement === 'square'
-                                  ? 'bg-blue-200'
-                                  : index % 2 === 0
-                                  ? 'bg-blue-200'
-                                  : 'bg-blue-100'
+                              className={`h-2 w-2 rounded-full ${
+                                isActive ? 'bg-blue-500' : 'bg-transparent'
                               }`}
                             ></span>
-                          ))}
+                          </span>
+                          <span className="capitalize">{placement}</span>
                         </div>
-                        <span className="text-sm font-medium capitalize text-gray-700">{placement}</span>
-                      </button>
+                      </label>
                     );
                   })}
                 </div>
@@ -682,7 +859,7 @@ const LoadCalculator = () => {
               <button
                 type="button"
                 className="rounded-full bg-blue-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600"
-                onClick={handleSaveSettings}
+                onClick={() => setIsCargoDesignOpen(true)}
               >
                 Save
               </button>
@@ -690,6 +867,15 @@ const LoadCalculator = () => {
           </div>
         </div>
       )}
+      <CargoDesignModal isOpen={isCargoDesignOpen} onClose={() => setIsCargoDesignOpen(false)} />
+      <ContainerSelectionModal 
+        isOpen={isContainerSelectionOpen} 
+        onClose={() => setIsContainerSelectionOpen(false)}
+        onSelect={(containerType) => {
+          setContainers((prev) => [...prev, { type: containerType, id: Date.now() }]);
+          navigate(`/dashboard/container-details/${encodeURIComponent(containerType)}`);
+        }}
+      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { User, Plus, Calculator } from 'lucide-react';
+import { User, Plus, Calculator, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
@@ -7,13 +7,22 @@ const Header = () => {
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center">
+          {/* Logo and Home Button */}
+          <div className="flex items-center gap-4">
             <img 
               src="/images/logo.png" 
               alt="Aaziko Logo" 
               className="h-10 w-auto"
             />
+            
+            {/* Home Button */}
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm hover:shadow-md"
+            >
+              <Home className="w-4 h-4" />
+              <span className="text-sm font-medium">Home</span>
+            </button>
           </div>
 
           {/* Right Side Actions */}

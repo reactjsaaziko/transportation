@@ -7,13 +7,12 @@ const InspectionSidebar = ({ activeMenu, onMenuChange }: InspectionSidebarProps)
   const menuItems = [
     { id: 'inspection-service', label: 'Service' },
     { id: 'inspection-order', label: 'Order' },
-    { id: 'inspection-buyer', label: 'Buyer' },
     { id: 'inspection-contact', label: 'Contact us' },
     { id: 'inspection-ai', label: 'AI Assistant' },
   ];
 
   return (
-    <div className="w-[18rem] bg-white border-r border-gray-200 min-h-screen">
+    <div className="w-[22rem] bg-white border-r border-gray-200 min-h-screen">
       <div className="p-4 space-y-2">
         {menuItems.map((item) => (
           <button

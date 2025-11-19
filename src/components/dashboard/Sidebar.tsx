@@ -21,17 +21,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, onMenuChange }) => {
       ],
     },
     {
-      id: 'buyer',
-      label: 'Buyer',
-      hasDropdown: true,
-      subItems: [
-        { id: 'buyer', label: 'Road' },
-        { id: 'rail-buyer', label: 'Rail' },
-        { id: 'air-buyer', label: 'Air' },
-        { id: 'water-buyer', label: 'Water' },
-      ],
-    },
-    {
       id: 'trip',
       label: 'Trip',
       hasDropdown: false,

@@ -9,7 +9,6 @@ const menuItems = [
   { id: 'manage-warehouse', label: 'Manage warehouse' },
   { id: 'warehouse-account', label: 'Account' },
   { id: 'warehouse-order', label: 'Order' },
-  { id: 'warehouse-buyer', label: 'Buyer' },
   { id: 'warehouse-contact-us', label: 'Contact us' },
   { id: 'warehouse-ai-assistant', label: 'AI Assistant' },
 ];

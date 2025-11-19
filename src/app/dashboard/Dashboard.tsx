@@ -11,6 +11,8 @@ import FloatingSupport from '../../components/common/FloatingSupport';
 import AddNewVehicle from '../../components/Domestraction transportiton/vehicle/AddNewVehicle';
 import ManageVehicle from '../../components/Domestraction transportiton/vehicle/ManageVehicle';
 import BulkUploadModal from '../../components/Domestraction transportiton/vehicle/BulkUploadModal';
+import LoadCalculator from '../../components/Domestraction transportiton/vehicle/LoadCalculator';
+import ContainerDetailsPage from '../../components/Domestraction transportiton/vehicle/ContainerDetailsPage';
 import TripManagement from '../../components/Domestraction transportiton/trip/TripManagement';
 import AccountTripsTable from '../../components/Domestraction transportiton/account/AccountTripsTable';
 import ContactUsCard from '../../components/contact/ContactUsCard';
@@ -168,21 +170,23 @@ const Dashboard = () => {
         {/* Main Content */}
         <div className="flex-1">
           <div className="px-6 py-4">
-            {/* Service Tabs and Bulk Upload */}
-            <div className="flex items-center justify-between mb-6">
-              <ServiceTabs 
-                activeTab={activeTab} 
-                onTabChange={(tab) => {
-                  setActiveTab(tab);
-                }} 
-              />
-              <button 
-                onClick={() => setIsBulkUploadOpen(true)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 underline"
-              >
-                Bulk Upload
-              </button>
-            </div>
+            {/* Service Tabs and Bulk Upload - Hide when on load-calculator */}
+            {currentMenu !== 'load-calculator' && (
+              <div className="flex items-center justify-between mb-6">
+                <ServiceTabs 
+                  activeTab={activeTab} 
+                  onTabChange={(tab) => {
+                    setActiveTab(tab);
+                  }} 
+                />
+                <button 
+                  onClick={() => setIsBulkUploadOpen(true)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 underline"
+                >
+                  Bulk Upload
+                </button>
+              </div>
+            )}
             
             {/* Main Content Area */}
             {activeTab === 'Warehouse' ? (
@@ -221,6 +225,7 @@ const Dashboard = () => {
                 <Route path="add-vehicle" element={<AddNewVehicle />} />
                 <Route path="manage-vehicle" element={<ManageVehicle />} />
                 <Route path="load-calculator" element={<LoadCalculator />} />
+                <Route path="container-details/:productId" element={<ContainerDetailsPage />} />
                 <Route path="trip" element={<TripManagement />} />
                 <Route path="account" element={<AccountTripsTable />} />
                 <Route path="contact-us" element={<ContactUsCard />} />

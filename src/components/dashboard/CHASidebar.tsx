@@ -16,10 +16,6 @@ const CHASidebar: React.FC<CHASidebarProps> = ({ activeMenu, onMenuChange }) => 
       label: 'Order',
     },
     {
-      id: 'buyer',
-      label: 'Buyer',
-    },
-    {
       id: 'contact-us',
       label: 'Contact us',
     },
