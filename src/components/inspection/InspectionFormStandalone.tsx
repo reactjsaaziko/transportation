@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 const expertiseOptions = ['Inspection', 'Testing', 'Audit/Certification', 'Other'];
 const inspectionTypes = [
@@ -34,19 +35,50 @@ const domainOptions = [
 const productTags = ['Footwear', 'Gifts & Premiums', 'Categories of products'];
 const languageTags = ['English', 'Hindi'];
 
-const InspectionForm = () => {
+const InspectionFormStandalone = () => {
   const [showOtherZone, setShowOtherZone] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    navigate('/dashboard/inspection-service');
+    // Show success and redirect to login
+    alert('Thank you for showing interest! We will contact you soon.');
+    navigate('/login');
+  };
+
+  const handleBack = () => {
+    navigate('/login');
   };
 
   return (
-    <div className="pb-12">
-      <div className="mx-auto w-full px-6">
-        <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-2xl shadow-sm px-8 py-10 space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      {/* Simple Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="w-full px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleBack}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
+            <img src="/images/logo.png" alt="Aaziko Logo" className="h-8 w-auto" />
+          </div>
+          <h1 className="text-lg font-semibold text-gray-800">Show Interest Form</h1>
+        </div>
+      </div>
+
+      {/* Form Content - Full Width */}
+      <div className="w-full py-8 px-6">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Inspection Service Interest</h2>
+          <p className="text-gray-500 mt-1">Fill out the form below to express your interest</p>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white border border-gray-200 rounded-2xl shadow-sm px-8 py-10 space-y-8"
+        >
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
@@ -54,6 +86,7 @@ const InspectionForm = () => {
               </label>
               <input
                 type="text"
+                required
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 placeholder="Enter first name"
               />
@@ -64,6 +97,7 @@ const InspectionForm = () => {
               </label>
               <input
                 type="text"
+                required
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 placeholder="Enter last name"
               />
@@ -92,6 +126,7 @@ const InspectionForm = () => {
               </label>
               <input
                 type="email"
+                required
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 placeholder="name@email.com"
               />
@@ -103,7 +138,10 @@ const InspectionForm = () => {
               <div className="flex flex-wrap gap-3">
                 {expertiseOptions.map((option) => (
                   <label key={option} className="flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
                     {option}
                   </label>
                 ))}
@@ -117,7 +155,9 @@ const InspectionForm = () => {
             </p>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-2">
-                <label className="text-xs font-medium uppercase tracking-wide text-gray-500">Country</label>
+                <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Country
+                </label>
                 <select className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                   <option>India</option>
                   <option>United States</option>
@@ -125,17 +165,29 @@ const InspectionForm = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-medium uppercase tracking-wide text-gray-500">Select State (Province)</label>
+                <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Select State (Province)
+                </label>
                 <div className="flex flex-wrap gap-2 rounded-lg border border-gray-300 px-3 py-2.5">
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">Gujrat</span>
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">Maharashtra</span>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
+                    Gujrat
+                  </span>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
+                    Maharashtra
+                  </span>
                 </div>
               </div>
               <div className="space-y-2 sm:col-span-2 lg:col-span-2">
-                <label className="text-xs font-medium uppercase tracking-wide text-gray-500">Select City</label>
+                <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Select City
+                </label>
                 <div className="flex flex-wrap gap-2 rounded-lg border border-gray-300 px-3 py-2.5">
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">Ahmedabad</span>
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">Surat</span>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
+                    Ahmedabad
+                  </span>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
+                    Surat
+                  </span>
                 </div>
               </div>
             </div>
@@ -151,7 +203,9 @@ const InspectionForm = () => {
             {showOtherZone && (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-medium uppercase tracking-wide text-gray-500">Country</label>
+                  <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Country
+                  </label>
                   <select className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                     <option>India</option>
                     <option>United States</option>
@@ -159,7 +213,9 @@ const InspectionForm = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-medium uppercase tracking-wide text-gray-500">Select State (Province)</label>
+                  <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Select State (Province)
+                  </label>
                   <input
                     type="text"
                     className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
@@ -167,7 +223,9 @@ const InspectionForm = () => {
                   />
                 </div>
                 <div className="space-y-2 sm:col-span-2 lg:col-span-2">
-                  <label className="text-xs font-medium uppercase tracking-wide text-gray-500">Select City</label>
+                  <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Select City
+                  </label>
                   <input
                     type="text"
                     className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
@@ -186,7 +244,10 @@ const InspectionForm = () => {
               <div className="flex flex-wrap gap-3">
                 {['Standard', 'Regulatory/ Mandatory', 'Customized'].map((option) => (
                   <label key={option} className="flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
                     {option}
                   </label>
                 ))}
@@ -200,7 +261,10 @@ const InspectionForm = () => {
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {inspectionTypes.map((type) => (
                   <label key={type} className="flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
                     {type}
                   </label>
                 ))}
@@ -214,13 +278,19 @@ const InspectionForm = () => {
             </p>
             <div className="flex flex-wrap gap-2 rounded-lg border border-gray-300 px-3 py-2.5">
               {productTags.map((tag) => (
-                <span key={tag} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
+                <span
+                  key={tag}
+                  className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600"
+                >
                   {tag}
                 </span>
               ))}
             </div>
             <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
               Other
             </label>
           </div>
@@ -243,7 +313,10 @@ const InspectionForm = () => {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {domainOptions.map((domain) => (
                 <label key={domain} className="flex items-center gap-2 text-sm text-gray-700">
-                  <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
                   {domain}
                 </label>
               ))}
@@ -252,13 +325,15 @@ const InspectionForm = () => {
 
           <div className="space-y-3">
             <p className="text-sm font-medium text-gray-700">
-              It's probably a good idea to upload your CV, and all copies of your degrees and training certificate here!<span className="text-red-500">*</span>
+              It's probably a good idea to upload your CV, and all copies of your degrees and
+              training certificate here!<span className="text-red-500">*</span>
             </p>
             <div className="rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/40 px-6 py-10 text-center">
               <div className="space-y-2">
                 <p className="text-sm font-semibold text-gray-700">Drag or upload files</p>
                 <p className="text-xs text-gray-500">
-                  CV/Qualifications, accreditations, certifications, diplomas, degree... (.jpeg, .pdf, .doc, .xls only)
+                  CV/Qualifications, accreditations, certifications, diplomas, degree... (.jpeg,
+                  .pdf, .doc, .xls only)
                 </p>
               </div>
             </div>
@@ -270,7 +345,10 @@ const InspectionForm = () => {
             </p>
             <div className="flex flex-wrap gap-2 rounded-lg border border-gray-300 px-3 py-2.5">
               {languageTags.map((tag) => (
-                <span key={tag} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
+                <span
+                  key={tag}
+                  className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600"
+                >
                   {tag}
                 </span>
               ))}
@@ -282,18 +360,28 @@ const InspectionForm = () => {
             />
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="rounded-lg border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
-              className="rounded-lg bg-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600"
+              className="rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:from-orange-600 hover:to-orange-700"
             >
-              Submit
+              Submit Interest
             </button>
           </div>
         </form>
+
+        {/* Copyright */}
+        <p className="text-center text-gray-400 text-sm mt-8">© 2026 Aaziko. All rights reserved.</p>
       </div>
     </div>
   );
 };
 
-export default InspectionForm;
+export default InspectionFormStandalone;

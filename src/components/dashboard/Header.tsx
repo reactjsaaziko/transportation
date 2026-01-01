@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
   const navigate = useNavigate();
+
+  const handleProfileClick = () => {
+    // Navigate to profile form (without submit button)
+    navigate('/dashboard/profile');
+  };
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="w-full px-4 sm:px-6 lg:px-8">
@@ -27,9 +33,13 @@ const Header = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-4">
-            {/* User Icon */}
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <User className="w-5 h-5 text-gray-600" />
+            {/* User/Profile Icon - Opens Inspection Form */}
+            <button 
+              onClick={handleProfileClick}
+              className="p-2 hover:bg-blue-50 rounded-full transition-colors group relative"
+              title="Inspection Service"
+            >
+              <User className="w-5 h-5 text-gray-600 group-hover:text-blue-600" />
             </button>
 
             {/* Load Calculator Button */}

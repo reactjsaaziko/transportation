@@ -2,11 +2,6 @@ import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router';
 import Header from '../../components/dashboard/Header';
 import Sidebar from '../../components/dashboard/Sidebar';
-import CHASidebar from '../../components/dashboard/CHASidebar';
-import WarehouseSidebar from '../../components/dashboard/WarehouseSidebar';
-import FreightSidebar from '../../components/freight/FreightSidebar';
-import LoadCalculatorSidebar from '../../components/dashboard/LoadCalculatorSidebar';
-import ServiceTabs from '../../components/dashboard/ServiceTabs';
 import FloatingSupport from '../../components/common/FloatingSupport';
 import AddNewVehicle from '../../components/Domestraction transportiton/vehicle/AddNewVehicle';
 import ManageVehicle from '../../components/Domestraction transportiton/vehicle/ManageVehicle';
@@ -29,10 +24,10 @@ import FreightOrderDetails from '../../components/freight/FreightOrderDetails';
 import FreightContact from '../../components/freight/FreightContact';
 import InspectionForm from '../../components/inspection/InspectionForm';
 import InspectionResults from '../../components/inspection/InspectionResults';
-import InspectionSidebar from '../../components/inspection/InspectionSidebar';
 import InspectionOrders from '../../components/inspection/InspectionOrders';
 import InspectionOrderDetails from '../../components/inspection/InspectionOrderDetails';
 import InspectionContact from '../../components/inspection/InspectionContact';
+import ProfileForm from '../../components/profile/ProfileForm';
 import BuyerPage from '../../components/buyer/BuyerPage';
 import RailBuyerPage from '../../components/buyer/RailBuyerPage';
 import AirBuyerPage from '../../components/buyer/AirBuyerPage';
@@ -65,26 +60,21 @@ const freightMenuIds = new Set([
   'freight-contact',
   'freight-ai',
 ]);
+const insuranceMenuIds = new Set([
+  'insurance-service',
+  'insurance-order',
+  'insurance-contact',
+  'insurance-ai',
+]);
 
 const getDefaultMenuForTab = (tab: string) => {
   if (tab === 'CHA') return 'service';
   if (tab === 'Warehouse') return 'manage-warehouse';
   if (tab === 'Freight Forwarding') return 'freight-service';
   if (tab === 'Inspection') return 'inspection-service';
+  if (tab === 'Insurance') return 'insurance-service';
   return 'add-vehicle';
 };
-
-const WarehousePlaceholder = ({ title }: { title: string }) => (
-  <div className="py-20 text-center text-gray-500">{title} page coming soon</div>
-);
-
-const InspectionPlaceholder = ({ title }: { title: string }) => (
-  <div className="py-20 text-center text-gray-500">{title} page coming soon</div>
-);
-
-const FreightPlaceholder = ({ title }: { title: string }) => (
-  <div className="py-20 text-center text-gray-500">{title} page coming soon</div>
-);
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('Domestic Transportation');
@@ -114,152 +104,111 @@ const Dashboard = () => {
     }
   };
 
-  // Navigate to service when CHA tab is selected (only if not already on a CHA route)
-  useEffect(() => {
-    if (activeTab === 'CHA') {
-      // Only navigate to service if we're not already on a CHA-specific route
-      if (!chaPrimaryMenuIds.has(currentMenu) && currentMenu !== 'contact-us' && currentMenu !== 'ai-assistant') {
-        navigate('/dashboard/service', { replace: true });
-      }
-    } else if (activeTab === 'Warehouse') {
-      if (!warehouseMenuIds.has(currentMenu)) {
-        navigate('/dashboard/manage-warehouse', { replace: true });
-      }
-    } else if (activeTab === 'Freight Forwarding') {
-      if (!freightMenuIds.has(currentMenu)) {
-        navigate('/dashboard/freight-service', { replace: true });
-      }
-    } else if (activeTab === 'Inspection') {
-      if (!inspectionMenuIds.has(currentMenu)) {
-        navigate('/dashboard/inspection-service', { replace: true });
-      }
-    } else if (activeTab === 'Domestic Transportation') {
-      // Navigate to add-vehicle for Domestic Transportation
-      const isOtherServiceMenu =
-        currentMenu !== 'buyer' &&
-        (warehouseMenuIds.has(currentMenu) ||
-          chaPrimaryMenuIds.has(currentMenu) ||
-          inspectionMenuIds.has(currentMenu) ||
-          freightMenuIds.has(currentMenu));
-
-      if (isOtherServiceMenu) {
-        navigate('/dashboard/add-vehicle', { replace: true });
-      }
-    }
-  }, [activeTab, navigate, currentMenu]);
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    // Navigate to default menu for the selected tab
+    navigate(`/dashboard/${getDefaultMenuForTab(tab)}`, { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="flex">
-        {/* Left Sidebar - Conditionally render based on active tab or current menu */}
-        {currentMenu === 'load-calculator' ? (
-          <LoadCalculatorSidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
-        ) : activeTab === 'CHA' ? (
-          <CHASidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
-        ) : activeTab === 'Warehouse' ? (
-          <WarehouseSidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
-        ) : activeTab === 'Freight Forwarding' ? (
-          <FreightSidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
-        ) : activeTab === 'Inspection' ? (
-          <InspectionSidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
-        ) : (
-          <Sidebar activeMenu={currentMenu} onMenuChange={handleMenuChange} />
-        )}
-        
+        {/* Left Sidebar - Unified sidebar with expandable service tabs */}
+        <Sidebar
+          activeMenu={currentMenu}
+          onMenuChange={handleMenuChange}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+        />
+
         {/* Main Content */}
         <div className="flex-1">
           <div className="px-6 py-4">
-            {/* Service Tabs and Bulk Upload - Hide when on load-calculator */}
-            {currentMenu !== 'load-calculator' && (
-              <div className="flex items-center justify-between mb-6">
-                <ServiceTabs 
-                  activeTab={activeTab} 
-                  onTabChange={(tab) => {
-                    setActiveTab(tab);
-                  }} 
-                />
-                <button 
-                  onClick={() => setIsBulkUploadOpen(true)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 underline"
-                >
-                  Bulk Upload
-                </button>
-              </div>
-            )}
-            
-            {/* Main Content Area */}
-            {activeTab === 'Warehouse' ? (
-              <Routes>
-                <Route path="manage-warehouse" element={<WarehouseFacilities />} />
-                <Route path="warehouse-account" element={<WarehouseAccountTable />} />
-                <Route path="warehouse-order" element={<WarehouseOrders />} />
-                <Route path="warehouse-buyer" element={<BuyerPage title="Warehouse buyer" />} />
-                <Route path="warehouse-contact-us" element={<WarehouseContact />} />
-                <Route path="warehouse-ai-assistant" element={<AiAssistantPanel />} />
-                <Route path="*" element={<Navigate to="/dashboard/manage-warehouse" replace />} />
-              </Routes>
-            ) : activeTab === 'Freight Forwarding' ? (
-              <Routes>
-                <Route path="freight-service" element={<FreightService />} />
-                <Route path="freight-order" element={<FreightOrders />} />
-                <Route path="freight-order/:orderId" element={<FreightOrderDetails />} />
-                <Route path="freight-buyer" element={<BuyerPage title="Freight buyer" />} />
-                <Route path="freight-contact" element={<FreightContact />} />
-                <Route path="freight-ai" element={<AiAssistantPanel />} />
-                <Route path="*" element={<Navigate to="/dashboard/freight-service" replace />} />
-              </Routes>
-            ) : activeTab === 'Inspection' ? (
-              <Routes>
-                <Route path="inspection-service" element={<InspectionForm />} />
-                <Route path="inspection-service/results" element={<InspectionResults />} />
-                <Route path="inspection-order" element={<InspectionOrders />} />
-                <Route path="inspection-order/:orderId" element={<InspectionOrderDetails />} />
-                <Route path="inspection-buyer" element={<BuyerPage title="Inspection buyer" />} />
-                <Route path="inspection-contact" element={<InspectionContact />} />
-                <Route path="inspection-ai" element={<AiAssistantPanel />} />
-                <Route path="*" element={<Navigate to="/dashboard/inspection-service" replace />} />
-              </Routes>
-            ) : (
-              <Routes>
-                <Route path="add-vehicle" element={<AddNewVehicle />} />
-                <Route path="manage-vehicle" element={<ManageVehicle />} />
-                <Route path="load-calculator" element={<LoadCalculator />} />
-                <Route path="container-details/:productId" element={<ContainerDetailsPage />} />
-                <Route path="trip" element={<TripManagement />} />
-                <Route path="account" element={<AccountTripsTable />} />
-                <Route path="contact-us" element={<ContactUsCard />} />
-                <Route path="ai-assistant" element={<AiAssistantPanel />} />
-                <Route path="buyer" element={<BuyerPage title="Buyer" />} />
-                <Route path="rail-buyer" element={<RailBuyerPage />} />
-                <Route path="air-buyer" element={<AirBuyerPage />} />
-                <Route path="water-buyer" element={<WaterBuyerPage />} />
-                <Route path="order-submission" element={<OrderSubmission />} />
-                <Route path="insurance-selection" element={<InsuranceSelection />} />
-                <Route path="quote-comparison" element={<QuoteComparison />} />
-                {/* CHA Routes */}
-                <Route path="service" element={<CHAForm />} />
-                <Route path="order" element={<CHAOrders />} />
-                <Route
-                  path="*"
-                  element={
-                    <div className="py-20 text-center text-gray-500">
-                      Select an option from the sidebar
-                    </div>
-                  }
-                />
-              </Routes>
-            )}
+            {/* Bulk Upload Button */}
+            <div className="flex items-center justify-end mb-6">
+              <button
+                onClick={() => setIsBulkUploadOpen(true)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 underline"
+              >
+                Bulk Upload
+              </button>
+            </div>
+
+            {/* Main Content Area - All Routes */}
+            <Routes>
+              {/* Domestic Transportation Routes */}
+              <Route path="add-vehicle" element={<AddNewVehicle />} />
+              <Route path="manage-vehicle" element={<ManageVehicle />} />
+              <Route path="load-calculator" element={<LoadCalculator />} />
+              <Route path="container-details/:productId" element={<ContainerDetailsPage />} />
+              <Route path="trip" element={<TripManagement />} />
+              <Route path="account" element={<AccountTripsTable />} />
+              <Route path="contact-us" element={<ContactUsCard />} />
+              <Route path="ai-assistant" element={<AiAssistantPanel />} />
+              <Route path="buyer" element={<BuyerPage title="Buyer" />} />
+              <Route path="rail-buyer" element={<RailBuyerPage />} />
+              <Route path="air-buyer" element={<AirBuyerPage />} />
+              <Route path="water-buyer" element={<WaterBuyerPage />} />
+              <Route path="order-submission" element={<OrderSubmission />} />
+              <Route path="insurance-selection" element={<InsuranceSelection />} />
+              <Route path="quote-comparison" element={<QuoteComparison />} />
+
+              {/* CHA Routes */}
+              <Route path="service" element={<CHAForm />} />
+              <Route path="order" element={<CHAOrders />} />
+
+              {/* Warehouse Routes */}
+              <Route path="manage-warehouse" element={<WarehouseFacilities />} />
+              <Route path="warehouse-account" element={<WarehouseAccountTable />} />
+              <Route path="warehouse-order" element={<WarehouseOrders />} />
+              <Route path="warehouse-buyer" element={<BuyerPage title="Warehouse buyer" />} />
+              <Route path="warehouse-contact-us" element={<WarehouseContact />} />
+              <Route path="warehouse-ai-assistant" element={<AiAssistantPanel />} />
+
+              {/* Freight Forwarding Routes */}
+              <Route path="freight-service" element={<FreightService />} />
+              <Route path="freight-order" element={<FreightOrders />} />
+              <Route path="freight-order/:orderId" element={<FreightOrderDetails />} />
+              <Route path="freight-buyer" element={<BuyerPage title="Freight buyer" />} />
+              <Route path="freight-contact" element={<FreightContact />} />
+              <Route path="freight-ai" element={<AiAssistantPanel />} />
+
+              {/* Inspection Routes */}
+              <Route path="inspection-service" element={<InspectionResults />} />
+              <Route path="inspection-service/form" element={<InspectionForm />} />
+              <Route path="inspection-order" element={<InspectionOrders />} />
+              <Route path="inspection-order/:orderId" element={<InspectionOrderDetails />} />
+              <Route path="inspection-buyer" element={<BuyerPage title="Inspection buyer" />} />
+              <Route path="inspection-contact" element={<InspectionContact />} />
+              <Route path="inspection-ai" element={<AiAssistantPanel />} />
+
+              {/* Insurance Routes */}
+              <Route path="insurance-service" element={<InsuranceSelection />} />
+              <Route path="insurance-order" element={<OrderSubmission />} />
+              <Route path="insurance-contact" element={<ContactUsCard />} />
+              <Route path="insurance-ai" element={<AiAssistantPanel />} />
+
+              {/* Profile Route (without submit button) */}
+              <Route path="profile" element={<ProfileForm />} />
+
+              {/* Default Route */}
+              <Route
+                path="*"
+                element={
+                  <div className="py-20 text-center text-gray-500">
+                    Select an option from the sidebar
+                  </div>
+                }
+              />
+            </Routes>
           </div>
         </div>
       </div>
       <FloatingSupport />
-      
+
       {/* Bulk Upload Modal */}
-      <BulkUploadModal 
-        isOpen={isBulkUploadOpen} 
-        onClose={() => setIsBulkUploadOpen(false)} 
-      />
+      <BulkUploadModal isOpen={isBulkUploadOpen} onClose={() => setIsBulkUploadOpen(false)} />
     </div>
   );
 };
