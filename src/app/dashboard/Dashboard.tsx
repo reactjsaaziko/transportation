@@ -14,11 +14,11 @@ import ContactUsCard from '../../components/contact/ContactUsCard';
 import AiAssistantPanel from '../../components/ai/AiAssistantPanel';
 import CHAForm from '../../components/CHA/CHAForm';
 import CHAOrders from '../../components/CHA/CHAOrders';
-import WarehouseFacilities from '../../components/warehouse/WarehouseFacilities';
+import WarehouseList from '../../components/warehouse/WarehouseList';
 import WarehouseAccountTable from '../../components/warehouse/WarehouseAccountTable';
 import WarehouseOrders from '../../components/warehouse/WarehouseOrders';
 import WarehouseContact from '../../components/warehouse/WarehouseContact';
-import FreightService from '../../components/freight/FreightService';
+import FreightServiceForm from '../../components/freight/FreightServiceForm';
 import FreightOrders from '../../components/freight/FreightOrders';
 import FreightOrderDetails from '../../components/freight/FreightOrderDetails';
 import FreightContact from '../../components/freight/FreightContact';
@@ -95,6 +95,21 @@ const Dashboard = () => {
   useEffect(() => {
     if (currentMenu) {
       localStorage.setItem('activeMenu', currentMenu);
+      
+      // Update activeTab based on current menu
+      if (chaPrimaryMenuIds.has(currentMenu)) {
+        setActiveTab('CHA');
+      } else if (warehouseMenuIds.has(currentMenu)) {
+        setActiveTab('Warehouse');
+      } else if (freightMenuIds.has(currentMenu)) {
+        setActiveTab('Freight Forwarding');
+      } else if (inspectionMenuIds.has(currentMenu)) {
+        setActiveTab('Inspection');
+      } else if (insuranceMenuIds.has(currentMenu)) {
+        setActiveTab('Insurance');
+      } else {
+        setActiveTab('Domestic Transportation');
+      }
     }
   }, [currentMenu]);
 
@@ -159,7 +174,7 @@ const Dashboard = () => {
               <Route path="order" element={<CHAOrders />} />
 
               {/* Warehouse Routes */}
-              <Route path="manage-warehouse" element={<WarehouseFacilities />} />
+              <Route path="manage-warehouse" element={<WarehouseList />} />
               <Route path="warehouse-account" element={<WarehouseAccountTable />} />
               <Route path="warehouse-order" element={<WarehouseOrders />} />
               <Route path="warehouse-buyer" element={<BuyerPage title="Warehouse buyer" />} />
@@ -167,7 +182,7 @@ const Dashboard = () => {
               <Route path="warehouse-ai-assistant" element={<AiAssistantPanel />} />
 
               {/* Freight Forwarding Routes */}
-              <Route path="freight-service" element={<FreightService />} />
+              <Route path="freight-service" element={<FreightServiceForm />} />
               <Route path="freight-order" element={<FreightOrders />} />
               <Route path="freight-order/:orderId" element={<FreightOrderDetails />} />
               <Route path="freight-buyer" element={<BuyerPage title="Freight buyer" />} />
