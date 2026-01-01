@@ -1,5 +1,4 @@
-import { FormEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 const expertiseOptions = ['Inspection', 'Testing', 'Audit/Certification', 'Other'];
 const inspectionTypes = [
@@ -34,19 +33,13 @@ const domainOptions = [
 const productTags = ['Footwear', 'Gifts & Premiums', 'Categories of products'];
 const languageTags = ['English', 'Hindi'];
 
-const InspectionForm = () => {
+const ProfileForm = () => {
   const [showOtherZone, setShowOtherZone] = useState(false);
-  const navigate = useNavigate();
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    navigate('/dashboard/inspection-service');
-  };
 
   return (
     <div className="pb-12">
       <div className="mx-auto w-full px-6">
-        <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-2xl shadow-sm px-8 py-10 space-y-8">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-8 py-10 space-y-8">
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
@@ -281,19 +274,10 @@ const InspectionForm = () => {
               placeholder="Type the initials of the language until the tag appears"
             />
           </div>
-
-          <div className="flex justify-end pt-4">
-            <button
-              type="submit"
-              className="rounded-lg bg-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600"
-            >
-              Submit
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );
 };
 
-export default InspectionForm;
+export default ProfileForm;
