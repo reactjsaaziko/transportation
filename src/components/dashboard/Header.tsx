@@ -1,12 +1,17 @@
-import { User, Plus, Calculator, Home } from 'lucide-react';
+import { User, Plus, Calculator, Home, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBuyer } from '../../context/BuyerContext';
 
 const Header = () => {
   const navigate = useNavigate();
+  const { isBuyerMode, setIsBuyerMode } = useBuyer();
 
   const handleProfileClick = () => {
-    // Navigate to profile form (without submit button)
     navigate('/dashboard/profile');
+  };
+
+  const handleBuyerClick = () => {
+    setIsBuyerMode(true);
   };
 
   return (
@@ -23,7 +28,10 @@ const Header = () => {
             
             {/* Home Button */}
             <button 
-              onClick={() => navigate('/dashboard')}
+              onClick={() => {
+                setIsBuyerMode(false);
+                navigate('/dashboard');
+              }}
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm hover:shadow-md"
             >
               <Home className="w-4 h-4" />
@@ -33,11 +41,24 @@ const Header = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-4">
-            {/* User/Profile Icon - Opens Inspection Form */}
+            {/* Buyer Button */}
+            <button 
+              onClick={handleBuyerClick}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors shadow-sm ${
+                isBuyerMode 
+                  ? 'bg-green-500 text-white hover:bg-green-600' 
+                  : 'bg-orange-500 text-white hover:bg-orange-600'
+              }`}
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span className="text-sm font-medium">Buyer</span>
+            </button>
+
+            {/* User/Profile Icon */}
             <button 
               onClick={handleProfileClick}
               className="p-2 hover:bg-blue-50 rounded-full transition-colors group relative"
-              title="Inspection Service"
+              title="Profile"
             >
               <User className="w-5 h-5 text-gray-600 group-hover:text-blue-600" />
             </button>

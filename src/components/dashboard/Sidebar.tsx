@@ -143,7 +143,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           className="mb-1 animate-fadeIn"
           style={{ animationDelay: `${index * 50}ms` }}
         >
-          {item.hasDropdown ? (
+          {item.hasDropdown && item.subItems && item.subItems.length > 0 ? (
             <>
               <button
                 onClick={() => {
@@ -193,7 +193,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               }`}
             >
               <span>{item.label}</span>
-              <ChevronRight className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -253,7 +252,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       </span>
                     )}
                   </div>
-                  {!tab.comingSoon && (
+                  {!tab.comingSoon && menuItems.length > 0 && (
                     <ChevronDown
                       className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
                     />
@@ -263,7 +262,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {/* Menu Items Dropdown with Animation - Only show if not coming soon */}
                 {!tab.comingSoon && (
                   <AnimatedDropdown isOpen={isExpanded}>
-                    <div className="mt-2 ml-4 pl-3 border-l-2 border-blue-200 space-y-1 pb-2">
+                    <div className="mt-2 ml-4 pl-3 space-y-1 pb-2">
                       {renderMenuItems(menuItems)}
                     </div>
                   </AnimatedDropdown>

@@ -22,7 +22,7 @@ import FreightService from '../../components/freight/FreightService';
 import FreightOrders from '../../components/freight/FreightOrders';
 import FreightOrderDetails from '../../components/freight/FreightOrderDetails';
 import FreightContact from '../../components/freight/FreightContact';
-import InspectionForm from '../../components/inspection/InspectionForm';
+import InspectionForm from '../../components/profile/InspectionForm';
 import InspectionResults from '../../components/inspection/InspectionResults';
 import InspectionOrders from '../../components/inspection/InspectionOrders';
 import InspectionOrderDetails from '../../components/inspection/InspectionOrderDetails';
@@ -32,9 +32,11 @@ import BuyerPage from '../../components/buyer/BuyerPage';
 import RailBuyerPage from '../../components/buyer/RailBuyerPage';
 import AirBuyerPage from '../../components/buyer/AirBuyerPage';
 import WaterBuyerPage from '../../components/buyer/WaterBuyerPage';
+import BuyerDashboard from '../../components/buyer/BuyerDashboard';
 import OrderSubmission from '../../components/order/OrderSubmission';
 import InsuranceSelection from '../../components/order/InsuranceSelection';
 import QuoteComparison from '../../components/order/QuoteComparison';
+import { useBuyer } from '../../context/BuyerContext';
 
 const warehouseMenuIds = new Set([
   'manage-warehouse',
@@ -81,6 +83,7 @@ const Dashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { isBuyerMode } = useBuyer();
 
   useEffect(() => {
     if (location.pathname === '/dashboard' || location.pathname === '/dashboard/') {
@@ -109,6 +112,17 @@ const Dashboard = () => {
     // Navigate to default menu for the selected tab
     navigate(`/dashboard/${getDefaultMenuForTab(tab)}`, { replace: true });
   };
+
+  // If buyer mode is active, show the BuyerDashboard
+  if (isBuyerMode) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <BuyerDashboard />
+        <FloatingSupport />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

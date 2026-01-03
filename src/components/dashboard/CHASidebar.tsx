@@ -1,4 +1,4 @@
-import { ChevronRight, Truck, FileText, Warehouse, Ship, ClipboardCheck, Shield } from 'lucide-react';
+import { Truck, FileText, Warehouse, Ship, ClipboardCheck, Shield } from 'lucide-react';
 
 interface CHASidebarProps {
   activeMenu: string;
@@ -66,7 +66,6 @@ const CHASidebar: React.FC<CHASidebarProps> = ({ activeMenu, onMenuChange, activ
               }`}
             >
               <span>{item.label}</span>
-              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         ))}

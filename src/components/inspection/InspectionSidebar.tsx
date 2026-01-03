@@ -1,4 +1,4 @@
-import { ChevronRight, Truck, FileText, Warehouse, Ship, ClipboardCheck, Shield } from 'lucide-react';
+import { Truck, FileText, Warehouse, Ship, ClipboardCheck, Shield } from 'lucide-react';
 
 interface InspectionSidebarProps {
   activeMenu: string;
@@ -67,7 +67,6 @@ const InspectionSidebar = ({ activeMenu, onMenuChange, activeTab, onTabChange }:
               }`}
             >
               <span className="font-medium">{item.label}</span>
-              <ChevronRight className="w-4 h-4" />
             </button>
           ))}
         </div>

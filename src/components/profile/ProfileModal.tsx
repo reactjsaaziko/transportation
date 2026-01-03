@@ -1,24 +1,13 @@
 import { useState } from 'react';
-import { User, Mail, Phone, Building2, MapPin, FileText, Calendar } from 'lucide-react';
-import DomesticTransportationForm from './DomesticTransportationForm';
-import CHAProfileForm from './CHAProfileForm';
-import WarehouseProfileForm from './WarehouseProfileForm';
-import FreightForwardingForm from './FreightForwardingForm';
-import InspectionForm from './InspectionForm';
+import { X, User, Mail, Phone, Building2, MapPin, FileText, Calendar, CreditCard } from 'lucide-react';
 
-const allTabs = [
-  'My Account',
-  'Password',
-  'Domestic Transportation',
-  'CHA',
-  'Warehouse',
-  'Freight Forwarding',
-  'Inspection',
-  'Insurance',
-];
+interface ProfileModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
-const ProfileForm = () => {
-  const [activeTab, setActiveTab] = useState<string>('My Account');
+const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
+  const [activeTab, setActiveTab] = useState<'account' | 'password'>('account');
   const [formData, setFormData] = useState({
     userName: '',
     companyName: '',
@@ -43,62 +32,54 @@ const ProfileForm = () => {
   });
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'Domestic Transportation':
-        return (
-          <div className="p-6">
-            <DomesticTransportationForm />
-          </div>
-        );
-      case 'CHA':
-        return (
-          <div className="p-6">
-            <CHAProfileForm />
-          </div>
-        );
-      case 'Warehouse':
-        return (
-          <div className="p-6">
-            <WarehouseProfileForm />
-          </div>
-        );
-      case 'Freight Forwarding':
-        return (
-          <div className="p-6">
-            <FreightForwardingForm />
-          </div>
-        );
-      case 'Inspection':
-        return (
-          <div className="p-6">
-            <InspectionForm />
-          </div>
-        );
-      case 'Insurance':
-        return (
-          <div className="p-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-12 flex flex-col items-center justify-center min-h-[400px]">
-              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mb-6">
-                <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-semibold text-gray-800 mb-2">Coming Soon</h2>
-              <p className="text-gray-500 text-center max-w-md">
-                We're working hard to bring you the Insurance profile feature. Stay tuned for updates!
-              </p>
-            </div>
-          </div>
-        );
-      case 'My Account':
-        return (
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      
+      {/* Modal */}
+      <div className="relative bg-gray-100 rounded-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto mx-4 shadow-2xl">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-full transition-colors z-10"
+        >
+          <X className="w-5 h-5 text-gray-500" />
+        </button>
+
+        {/* Tabs */}
+        <div className="flex gap-2 p-4 bg-white border-b">
+          <button
+            onClick={() => setActiveTab('account')}
+            className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'account'
+                ? 'bg-blue-500 text-white'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            My Account
+          </button>
+          <button
+            onClick={() => setActiveTab('password')}
+            className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'password'
+                ? 'bg-blue-500 text-white'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Password
+          </button>
+        </div>
+
+        {activeTab === 'account' ? (
           <div className="p-6">
             {/* Personal Information Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-1">Personal Information</h2>
               <div className="border-b border-dashed border-gray-300 mb-6" />
 
@@ -115,6 +96,7 @@ const ProfileForm = () => {
 
                   {/* Form Fields */}
                   <div className="flex-1 grid grid-cols-3 gap-4">
+                    {/* User Name */}
                     <div className="relative">
                       <div className="absolute left-3 top-1/2 -translate-y-1/2">
                         <User className="w-4 h-4 text-gray-400" />
@@ -127,6 +109,8 @@ const ProfileForm = () => {
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                       />
                     </div>
+
+                    {/* Company Name */}
                     <div className="relative">
                       <div className="absolute left-3 top-1/2 -translate-y-1/2">
                         <Building2 className="w-4 h-4 text-gray-400" />
@@ -139,6 +123,8 @@ const ProfileForm = () => {
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                       />
                     </div>
+
+                    {/* GST Number */}
                     <div className="relative">
                       <div className="absolute left-3 top-1/2 -translate-y-1/2">
                         <FileText className="w-4 h-4 text-gray-400" />
@@ -151,6 +137,8 @@ const ProfileForm = () => {
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                       />
                     </div>
+
+                    {/* Email Address */}
                     <div className="relative">
                       <div className="absolute left-3 top-1/2 -translate-y-1/2">
                         <Mail className="w-4 h-4 text-gray-400" />
@@ -163,6 +151,8 @@ const ProfileForm = () => {
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                       />
                     </div>
+
+                    {/* Address */}
                     <div className="relative col-span-2">
                       <div className="absolute left-3 top-1/2 -translate-y-1/2">
                         <MapPin className="w-4 h-4 text-gray-400" />
@@ -175,6 +165,8 @@ const ProfileForm = () => {
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                       />
                     </div>
+
+                    {/* Contact Number */}
                     <div className="relative">
                       <div className="absolute left-3 top-1/2 -translate-y-1/2">
                         <Phone className="w-4 h-4 text-gray-400" />
@@ -198,6 +190,7 @@ const ProfileForm = () => {
                   <button className="text-xs text-blue-500 hover:underline">EDIT</button>
                 </div>
                 <div className="flex items-center gap-6">
+                  {/* Country */}
                   <div className="flex items-center gap-2">
                     <span className="text-xl">🇮🇳</span>
                     <select
@@ -209,8 +202,10 @@ const ProfileForm = () => {
                       <option value="USA">USA</option>
                       <option value="UK">UK</option>
                     </select>
-                    <input type="radio" checked readOnly className="w-4 h-4 text-blue-500 accent-blue-500" />
+                    <input type="radio" checked readOnly className="w-4 h-4 text-blue-500" />
                   </div>
+
+                  {/* State */}
                   <div className="flex items-center gap-2">
                     <select
                       value={formData.state}
@@ -221,8 +216,10 @@ const ProfileForm = () => {
                       <option value="Gujarat">Gujarat</option>
                       <option value="Delhi">Delhi</option>
                     </select>
-                    <input type="radio" className="w-4 h-4 text-blue-500 accent-blue-500" />
+                    <input type="radio" className="w-4 h-4 text-blue-500" />
                   </div>
+
+                  {/* City */}
                   <div className="flex items-center gap-2">
                     <select
                       value={formData.city}
@@ -233,7 +230,7 @@ const ProfileForm = () => {
                       <option value="Pune">Pune</option>
                       <option value="Nagpur">Nagpur</option>
                     </select>
-                    <input type="radio" className="w-4 h-4 text-blue-500 accent-blue-500" />
+                    <input type="radio" className="w-4 h-4 text-blue-500" />
                   </div>
                 </div>
               </div>
@@ -256,6 +253,7 @@ const ProfileForm = () => {
                       />
                     </div>
                   </div>
+
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">CHA License Number:</p>
                     <div className="relative">
@@ -271,6 +269,7 @@ const ProfileForm = () => {
                       />
                     </div>
                   </div>
+
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">Agreement Date:</p>
                     <div className="relative">
@@ -286,6 +285,7 @@ const ProfileForm = () => {
                       />
                     </div>
                   </div>
+
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">Agreement File:</p>
                     <button className="w-full py-3 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
@@ -301,6 +301,7 @@ const ProfileForm = () => {
                   <p className="text-sm font-medium text-gray-700">Bank Details:</p>
                   <button className="text-xs text-blue-500 hover:underline">EDIT</button>
                 </div>
+
                 <div className="grid grid-cols-4 gap-4 mb-4">
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 -translate-y-1/2">
@@ -314,6 +315,7 @@ const ProfileForm = () => {
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                     />
                   </div>
+
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">Payment Term:</p>
                     <div className="flex gap-2">
@@ -344,6 +346,7 @@ const ProfileForm = () => {
                       </select>
                     </div>
                   </div>
+
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">API Availble:</p>
                     <div className="flex items-center gap-4 py-2">
@@ -354,7 +357,7 @@ const ProfileForm = () => {
                           value="yes"
                           checked={formData.apiAvailable === 'yes'}
                           onChange={(e) => handleInputChange('apiAvailable', e.target.value)}
-                          className="w-4 h-4 text-blue-500 accent-blue-500"
+                          className="w-4 h-4 text-blue-500"
                         />
                         Yes
                       </label>
@@ -365,13 +368,14 @@ const ProfileForm = () => {
                           value="no"
                           checked={formData.apiAvailable === 'no'}
                           onChange={(e) => handleInputChange('apiAvailable', e.target.value)}
-                          className="w-4 h-4 text-blue-500 accent-blue-500"
+                          className="w-4 h-4 text-blue-500"
                         />
                         No
                       </label>
                     </div>
                   </div>
                 </div>
+
                 <div className="grid grid-cols-4 gap-4">
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 -translate-y-1/2">
@@ -385,6 +389,7 @@ const ProfileForm = () => {
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                     />
                   </div>
+
                   <select
                     value={formData.transactionalCurrency}
                     onChange={(e) => handleInputChange('transactionalCurrency', e.target.value)}
@@ -395,6 +400,7 @@ const ProfileForm = () => {
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
                   </select>
+
                   <select
                     value={formData.operationalCurrency}
                     onChange={(e) => handleInputChange('operationalCurrency', e.target.value)}
@@ -405,6 +411,7 @@ const ProfileForm = () => {
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
                   </select>
+
                   <button className="text-blue-500 text-sm hover:underline text-left">
                     Currency Exchange Rate
                   </button>
@@ -423,12 +430,12 @@ const ProfileForm = () => {
               </div>
             </div>
           </div>
-        );
-      case 'Password':
-        return (
+        ) : (
           <div className="p-6">
+            {/* Password Tab Content */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-6">Change Password</h2>
+              
               <div className="space-y-4 max-w-md">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Current Password</label>
@@ -438,6 +445,7 @@ const ProfileForm = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
+                
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">New Password</label>
                   <input
@@ -446,6 +454,7 @@ const ProfileForm = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
+                
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Confirm New Password</label>
                   <input
@@ -454,47 +463,17 @@ const ProfileForm = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
+
                 <button className="px-6 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
                   Update Password
                 </button>
               </div>
             </div>
           </div>
-        );
-      default:
-        return (
-          <div className="p-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-6 text-center text-gray-500">
-              Select a tab to view content
-            </div>
-          </div>
-        );
-    }
-  };
-
-  return (
-    <div className="bg-white min-h-screen">
-      {/* All Tabs in one row */}
-      <div className="bg-white px-6 py-4">
-        <div className="flex items-center gap-2">
-          {allTabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === tab ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+        )}
       </div>
-
-      {/* Content */}
-      {renderContent()}
     </div>
   );
 };
 
-export default ProfileForm;
+export default ProfileModal;

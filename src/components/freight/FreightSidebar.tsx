@@ -1,4 +1,4 @@
-import { ChevronRight, Truck, FileText, Warehouse, Ship, ClipboardCheck, Shield } from 'lucide-react';
+import { Truck, FileText, Warehouse, Ship, ClipboardCheck, Shield } from 'lucide-react';
 
 interface FreightSidebarProps {
   activeMenu: string;
@@ -67,7 +67,6 @@ const FreightSidebar = ({ activeMenu, onMenuChange, activeTab, onTabChange }: Fr
               }`}
             >
               <span className="font-medium">{item.label}</span>
-              <ChevronRight className="w-4 h-4" />
             </button>
           ))}
         </div>
