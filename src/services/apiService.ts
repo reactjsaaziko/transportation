@@ -436,6 +436,9 @@ export const apiService = createApi({
     "FreightStatistics",
     "FreightPricing",
 
+    // Inspection tags
+    "InspectionPricing",
+
     // CHA tags
     "CHAOrders",
     "CHAOrder",
