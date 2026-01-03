@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Truck, Ship, Plane, Droplet, Plus } from 'lucide-react';
+import { Truck, Ship, Plane, Droplet, Plus, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useCreateVehicleMutation, useGetVehicleTypesQuery, useGetVehicleModelsQuery } from '@/services/vehicleApi';
 import VehicleDetailsForm from './VehicleDetailsForm';
 import RailWagonSelection from './RailWagonSelection';
 import RailWagonDetailsForm from './RailWagonDetailsForm';
@@ -9,6 +10,13 @@ import WaterShipSelection from './WaterShipSelection';
 import WaterShipDetailsForm from './WaterShipDetailsForm';
 
 const AddNewVehicle = () => {
+  // Get user ID from localStorage (set after login)
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const serviceProviderId = user?.id || user?._id || '';
+
+  // API hooks
+  const [createVehicle, { isLoading: isCreating, isSuccess, isError, error }] = useCreateVehicleMutation();
+
   const [selectedCountry, setSelectedCountry] = useState('India');
   const [selectedTransportMode, setSelectedTransportMode] = useState('Road');
   const [selectedVehicle, setSelectedVehicle] = useState('');
@@ -30,6 +38,7 @@ const AddNewVehicle = () => {
   const [showWaterShipDetailsForm, setShowWaterShipDetailsForm] = useState(false);
   const [selectedVehicleData, setSelectedVehicleData] = useState<{ id: string; name: string; image: string } | null>(null);
   const [selectedVehicleModelData, setSelectedVehicleModelData] = useState<{ id: string; name: string; image: string } | null>(null);
+  const [submitMessage, setSubmitMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const transportModes = [
     { id: 'road', label: 'Road', icon: Truck },
@@ -100,10 +109,114 @@ const AddNewVehicle = () => {
     setShowDetailsForm(false);
   };
 
-  const handleDetailsFormSubmit = (data: any) => {
+  const handleDetailsFormSubmit = async (data: any) => {
     console.log('Vehicle details submitted:', data);
-    // Handle form submission here
-    // You can add API call or other logic
+    
+    if (!serviceProviderId) {
+      setSubmitMessage({ type: 'error', text: 'Please login to add vehicles' });
+      return;
+    }
+
+    try {
+      // Backend expects capitalized transportation modes: 'Road', 'Rail', 'Air', 'Water'
+      const transportModeMap: Record<string, 'Road' | 'Rail' | 'Air' | 'Water'> = {
+        'Road': 'Road',
+        'Rail': 'Rail',
+        'Air': 'Air',
+        'Water': 'Water',
+      };
+
+      // Parse dimensions from form data
+      const length = parseFloat(data.dimensions?.length) || 13600;
+      const width = parseFloat(data.dimensions?.width) || 2500;
+      const height = parseFloat(data.dimensions?.height) || 2650;
+      const maxWeight = parseFloat(data.dimensions?.maxWeight) || 2650;
+
+      // Parse pricing data from form
+      const loadingTime = parseFloat(data.loadingTime?.time) || 30;
+      const afterFreeTimePrice = parseFloat(data.afterFreeTime?.price) || 100;
+      const minDistance = parseFloat(data.minDistance) || 0;
+      const perDayAverage = parseFloat(data.perDayAverage) || 80;
+
+      // Prepare vehicle data matching backend schema
+      const vehicleData = {
+        serviceProviderId,
+        transportationMode: transportModeMap[selectedTransportMode] || 'Road',
+        vehicleType: selectedVehicleData?.name || data.vehicleType || 'Custom Truck',
+        vehicleModel: selectedVehicleModelData?.name || data.vehicleModel || 'Custom Model',
+        
+        // Specifications with value/unit structure
+        specifications: {
+          length: {
+            value: length,
+            unit: 'Ft'
+          },
+          width: {
+            value: width,
+            unit: 'Ft'
+          },
+          height: {
+            value: height,
+            unit: 'Ft'
+          },
+          maxWeight: {
+            value: maxWeight,
+            unit: 'Ft'
+          }
+        },
+        
+        // Vehicle identification
+        vehicleImage: data.vehicleImage || selectedVehicleModelData?.image || selectedVehicleData?.image || '/svg/t1.svg',
+        vehicleNumber: data.vehicleNumber,
+        
+        // Pricing with all required fields
+        pricing: {
+          loadingUnloadingFreeTime: {
+            time: loadingTime,
+            unit: 'Hour'
+          },
+          afterFreeTime: {
+            price: afterFreeTimePrice,
+            unit: 'Hour'
+          },
+          minimumDistance: {
+            value: minDistance || 10,
+            unit: 'Km'  // Backend enum: ['Km', 'Mile'] - must be capitalized
+          },
+          rateType: 'Per Km',
+          baseRate: perDayAverage || 50
+        },
+        
+        // Status
+        availability: 'Available' as const,
+        status: 'pending' as const
+      };
+
+      console.log('Sending vehicle data to API:', vehicleData);
+
+      const result = await createVehicle(vehicleData).unwrap();
+      
+      console.log('✅ Vehicle created successfully:', result);
+      setSubmitMessage({ type: 'success', text: 'Vehicle added successfully!' });
+      
+      // Reset form after 2 seconds
+      setTimeout(() => {
+        handleCancel();
+        setSubmitMessage(null);
+      }, 2000);
+      
+    } catch (err: any) {
+      console.error('❌ Failed to create vehicle:', err);
+      setSubmitMessage({ 
+        type: 'error', 
+        text: err?.data?.message || err?.data?.error || 'Failed to add vehicle. Please try again.' 
+      });
+      
+      // Auto-hide error after 5 seconds
+      setTimeout(() => {
+        setSubmitMessage(null);
+      }, 5000);
+    }
   };
 
   const handleRailWagonCancel = () => {
@@ -224,6 +337,26 @@ const AddNewVehicle = () => {
 
   return (
     <div className="bg-white rounded-lg p-6">
+      {/* Success/Error Message */}
+      {submitMessage && (
+        <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${
+          submitMessage.type === 'success' 
+            ? 'bg-green-50 border border-green-200' 
+            : 'bg-red-50 border border-red-200'
+        }`}>
+          {submitMessage.type === 'success' ? (
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+          ) : (
+            <AlertCircle className="h-5 w-5 text-red-600" />
+          )}
+          <span className={`text-sm font-medium ${
+            submitMessage.type === 'success' ? 'text-green-700' : 'text-red-700'
+          }`}>
+            {submitMessage.text}
+          </span>
+        </div>
+      )}
+
       {/* Country Selector */}
       <div className="mb-6">
         <div className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg w-fit cursor-pointer hover:bg-gray-50">
@@ -396,6 +529,7 @@ const AddNewVehicle = () => {
           vehicleName={selectedVehicleModelData?.name || selectedVehicleData?.name}
           onCancel={handleDetailsFormCancel}
           onSubmit={handleDetailsFormSubmit}
+          isLoading={isCreating}
         />
       )}
 

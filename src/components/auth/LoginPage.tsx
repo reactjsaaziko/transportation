@@ -1,22 +1,53 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
+import {
+  useLoginServiceProviderMutation,
+  handleServiceProviderLogin,
+} from '@/services/authApi';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [loginMutation] = useLoginServiceProviderMutation();
 
   const handleShowInterest = () => {
     // Navigate to standalone inspection form (no sidebar/header)
     navigate('/show-interest');
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    navigate('/dashboard');
+    setError('');
+    setIsLoading(true);
+
+    try {
+      // Call the authentication API
+      const result = await handleServiceProviderLogin(loginMutation, {
+        email,
+        password,
+      });
+
+      if (result.success) {
+        // Login successful - navigate to dashboard
+        console.log('✅ Login successful:', result.data.user);
+        navigate('/dashboard');
+      } else {
+        // Login failed - show error
+        setError(result.error || 'Login failed. Please try again.');
+        console.error('❌ Login failed:', result.error);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      console.error('❌ Login error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -87,12 +118,49 @@ const LoginPage = () => {
               </div>
             </div>
 
+            {/* Error Message */}
+            {error && (
+              <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-800">{error}</p>
+                </div>
+              </div>
+            )}
+
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+              disabled={isLoading}
+              className="w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Sign In
+              {isLoading ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                'Sign In'
+              )}
             </button>
           </form>
 

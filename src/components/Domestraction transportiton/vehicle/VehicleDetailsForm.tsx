@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Camera, Hash, Minus, Plus, ChevronDown } from 'lucide-react';
+import { Camera, Hash, Minus, Plus, ChevronDown, Loader2 } from 'lucide-react';
 import { vehicleFormStyles } from './formStyles';
 
 interface VehicleDetailsFormProps {
@@ -9,6 +9,7 @@ interface VehicleDetailsFormProps {
   vehicleName?: string;
   onCancel: () => void;
   onSubmit: (data: any) => void;
+  isLoading?: boolean;
 }
 
 type DimensionKey = 'length' | 'width' | 'height' | 'maxWeight';
@@ -34,7 +35,7 @@ const distanceUnits = [
   { value: 'cbm', label: 'CBM' },
 ];
 
-const VehicleDetailsForm = ({ vehicleType, vehicleModel, vehicleImage, vehicleName, onCancel, onSubmit }: VehicleDetailsFormProps) => {
+const VehicleDetailsForm = ({ vehicleType, vehicleModel, vehicleImage, vehicleName, onCancel, onSubmit, isLoading = false }: VehicleDetailsFormProps) => {
   const [quantity, setQuantity] = useState(1);
   const [dimensions] = useState<Record<DimensionKey, string>>(defaultRoadDimensions);
   const [loadingTime, setLoadingTime] = useState({ time: '', hour: '' });
@@ -44,13 +45,33 @@ const VehicleDetailsForm = ({ vehicleType, vehicleModel, vehicleImage, vehicleNa
   const [selectedCurrency, setSelectedCurrency] = useState(currencyOptions[0]);
   const [minDistance, setMinDistance] = useState('');
   const [perDayAverage, setPerDayAverage] = useState('');
+  const [vehicleNumber, setVehicleNumber] = useState('');
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
   const badgeValues = ['India', vehicleType, vehicleName || vehicleModel].filter(Boolean) as string[];
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUploadedImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = () => {
+    if (!vehicleNumber.trim()) {
+      alert('Please enter vehicle number');
+      return;
+    }
+
     const formData = {
       vehicleType,
       vehicleModel,
+      vehicleNumber: vehicleNumber.trim().toUpperCase(),
+      vehicleImage: uploadedImage || vehicleImage,
       quantity,
       dimensions,
       loadingTime,
@@ -132,14 +153,27 @@ const VehicleDetailsForm = ({ vehicleType, vehicleModel, vehicleImage, vehicleNa
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <button type="button" className={vehicleFormStyles.uploadButton}>
-            <span>Vehicle/Container Image</span>
+          <label className={`${vehicleFormStyles.uploadButton} cursor-pointer`}>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            <span>{uploadedImage ? '✓ Image Uploaded' : 'Vehicle/Container Image'}</span>
             <Camera className="h-4 w-4" />
-          </button>
-          <button type="button" className={vehicleFormStyles.uploadButton}>
-            <span>Vehicle/Container Number</span>
-            <Hash className="h-4 w-4" />
-          </button>
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              value={vehicleNumber}
+              onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
+              placeholder="Enter Vehicle Number (e.g., GJ01AB1234)"
+              className={`${vehicleFormStyles.uploadButton} w-full text-left pr-10`}
+              required
+            />
+            <Hash className="h-4 w-4 absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+          </div>
         </div>
       </div>
 
@@ -239,11 +273,28 @@ const VehicleDetailsForm = ({ vehicleType, vehicleModel, vehicleImage, vehicleNa
       </div>
 
       <div className="flex flex-wrap justify-center gap-4">
-        <button type="button" onClick={onCancel} className={vehicleFormStyles.ghostButton}>
+        <button 
+          type="button" 
+          onClick={onCancel} 
+          disabled={isLoading}
+          className={vehicleFormStyles.ghostButton}
+        >
           Cancel
         </button>
-        <button type="button" onClick={handleSubmit} className={vehicleFormStyles.primaryButton}>
-          Submit
+        <button 
+          type="button" 
+          onClick={handleSubmit} 
+          disabled={isLoading}
+          className={`${vehicleFormStyles.primaryButton} ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+              Submitting...
+            </>
+          ) : (
+            'Submit'
+          )}
         </button>
       </div>
     </div>

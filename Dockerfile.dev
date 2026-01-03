@@ -1,0 +1,37 @@
+# Use Node.js 24 Alpine as base image for development
+FROM node:24-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Accept build arguments for environment variables
+ARG VITE_API_BASE_URL
+ARG VITE_TRANSPORT_API_URL
+ARG VITE_COMMON_API_URL
+ARG VITE_MEDIA_API_URL
+ARG PORT
+
+# Export them as environment variables
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_TRANSPORT_API_URL=${VITE_TRANSPORT_API_URL}
+ENV VITE_COMMON_API_URL=${VITE_COMMON_API_URL}
+ENV VITE_MEDIA_API_URL=${VITE_MEDIA_API_URL}
+ENV PORT=${PORT}
+
+# Copy package files
+COPY package.json ./
+
+# Install all dependencies (keep overrides for consistency)
+RUN npm install --legacy-peer-deps || npm install --force
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE ${PORT}
+
+# Start development server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
