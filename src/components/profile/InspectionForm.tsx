@@ -1,6 +1,6 @@
-import { FormEvent, useState, KeyboardEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, KeyboardEvent } from 'react';
 import { X, MapPin, Phone } from 'lucide-react';
+import { useSubmitServiceProviderInquiryMutation } from '@/services/inquiryApi';
 
 // Floating Label Input Component
 const FloatingInput = ({
@@ -245,13 +245,13 @@ const domainOptions = [
 
 const InspectionForm = () => {
   const [showOtherZone, setShowOtherZone] = useState(false);
-  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     contactNo: '',
     email: '',
+    password: '',
     companyName: '',
     gstNo: '',
     address: '',
@@ -279,9 +279,61 @@ const InspectionForm = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    navigate('/dashboard/inspection-service');
+  const [submitInquiry, { isLoading: isSubmitting }] = useSubmitServiceProviderInquiryMutation();
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const pickEnabled = (record: Record<string, boolean>) =>
+    Object.entries(record)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+
+  const handleSubmit = async () => {
+    setFeedback(null);
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.contactNo || !formData.companyName) {
+      setFeedback({ type: 'error', message: 'Please fill first name, last name, email, contact number, and company name.' });
+      return;
+    }
+
+    if (!formData.password || formData.password.length < 6) {
+      setFeedback({
+        type: 'error',
+        message: 'Please choose a password (at least 6 characters). You will use this to log in once approved.',
+      });
+      return;
+    }
+    const selectedExpertise = pickEnabled(expertise);
+    const selectedFamiliarity = pickEnabled(inspectionFamiliarity);
+    const selectedStandardTypes = pickEnabled(standardInspectionTypes);
+    const selectedDomains = pickEnabled(domains);
+    const descriptionParts = [
+      formData.country && `Country: ${formData.country}`,
+      stateTags.length > 0 && `States: ${stateTags.join(', ')}`,
+      cityTags.length > 0 && `Cities: ${cityTags.join(', ')}`,
+      selectedExpertise.length > 0 && `Expertise: ${selectedExpertise.join(', ')}`,
+      selectedFamiliarity.length > 0 && `Inspection Familiarity: ${selectedFamiliarity.join(', ')}`,
+      selectedStandardTypes.length > 0 && `Standard Inspection Types: ${selectedStandardTypes.join(', ')}`,
+      productTags.length > 0 && `Product Categories: ${productTags.join(', ')}`,
+      selectedDomains.length > 0 && `Domains: ${selectedDomains.join(', ')}`,
+      languageTags.length > 0 && `Languages: ${languageTags.join(', ')}`,
+      formData.otherSpecify && `Other: ${formData.otherSpecify}`,
+      formData.gstNo && `GST No: ${formData.gstNo}`,
+      formData.address && `Address: ${formData.address}`,
+    ].filter(Boolean);
+    const username = `${formData.firstName}${formData.lastName}`.toLowerCase().replace(/\s+/g, '');
+    try {
+      await submitInquiry({
+        username,
+        workEmail: formData.email,
+        password: formData.password,
+        contactNo: formData.contactNo,
+        companyName: formData.companyName,
+        serviceType: 'Inspection',
+        description: descriptionParts.join(' | ') || 'Inspection service inquiry',
+      }).unwrap();
+      setFeedback({ type: 'success', message: 'Inquiry submitted successfully. An admin will review and email your login credentials.' });
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err?.data?.message || 'Failed to submit inquiry. Please try again.' });
+    }
   };
 
   const handleStateKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -370,11 +422,21 @@ const InspectionForm = () => {
             required
           />
           <FloatingInput
+            label="Password (min 6 chars)"
+            type="password"
+            value={formData.password}
+            onChange={(value) => handleInputChange('password', value)}
+            required
+          />
+          <FloatingInput
             label="Company Name"
             value={formData.companyName}
             onChange={(value) => handleInputChange('companyName', value)}
             required
           />
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mb-4">
           <FloatingInput
             label="GST No"
             value={formData.gstNo}
@@ -615,17 +677,22 @@ const InspectionForm = () => {
         />
       </div>
 
+      {/* Feedback */}
+      {feedback && (
+        <div className={`rounded-lg border px-4 py-3 text-sm ${feedback.type === 'success' ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'}`}>
+          {feedback.message}
+        </div>
+      )}
+
       {/* Submit Button */}
       <div className="flex justify-center">
         <button
           type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate('/dashboard/inspection-service');
-          }}
-          className="rounded-lg bg-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="rounded-lg bg-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-blue-300"
         >
-          Submit
+          {isSubmitting ? 'Submitting...' : 'Submit'}
         </button>
       </div>
     </div>

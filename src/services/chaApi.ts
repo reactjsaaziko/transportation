@@ -440,12 +440,121 @@ export const chaApi = apiService.injectEndpoints({
       ],
     }),
 
+    // ==================== CHA AI ASSISTANT — EXTRA ====================
+
+    // GET /cha/ai-assistant/conversations/service-provider/:serviceProviderId/history
+    getCHAConversationHistory: builder.query<any, { serviceProviderId: string } & Record<string, any>>({
+      query: ({ serviceProviderId, ...params }) => ({
+        url: `/service-provider/cha/ai-assistant/conversations/service-provider/${serviceProviderId}/history`,
+        params,
+      }),
+      providesTags: ['CHAConversations'],
+    }),
+
+    // GET /cha/ai-assistant/permissions/:serviceProviderId
+    getCHAAIPermissions: builder.query<any, string>({
+      query: (serviceProviderId) => ({
+        url: `/service-provider/cha/ai-assistant/permissions/${serviceProviderId}`,
+      }),
+      providesTags: ['AIPermissions'],
+    }),
+
+    // PUT /cha/ai-assistant/conversations/:conversationId/priority
+    updateCHAConversationPriority: builder.mutation<any, { conversationId: string; priority: string }>({
+      query: ({ conversationId, priority }) => ({
+        url: `/service-provider/cha/ai-assistant/conversations/${conversationId}/priority`,
+        method: 'PUT',
+        body: { priority },
+      }),
+      invalidatesTags: (result, error, { conversationId }) => [
+        { type: 'CHAConversation', id: conversationId },
+      ],
+    }),
+
+    // POST /cha/ai-assistant/conversations/:conversationId/tags
+    addCHAConversationTags: builder.mutation<any, { conversationId: string; tags: string[] }>({
+      query: ({ conversationId, tags }) => ({
+        url: `/service-provider/cha/ai-assistant/conversations/${conversationId}/tags`,
+        method: 'POST',
+        body: { tags },
+      }),
+      invalidatesTags: (result, error, { conversationId }) => [
+        { type: 'CHAConversation', id: conversationId },
+      ],
+    }),
+
+    // DELETE /cha/ai-assistant/conversations/:conversationId/tags
+    removeCHAConversationTags: builder.mutation<any, { conversationId: string; tags: string[] }>({
+      query: ({ conversationId, tags }) => ({
+        url: `/service-provider/cha/ai-assistant/conversations/${conversationId}/tags`,
+        method: 'DELETE',
+        body: { tags },
+      }),
+      invalidatesTags: (result, error, { conversationId }) => [
+        { type: 'CHAConversation', id: conversationId },
+      ],
+    }),
+
+    // POST /cha/ai-assistant/conversations/:conversationId/feedback
+    addCHAConversationFeedback: builder.mutation<any, { conversationId: string; data: any }>({
+      query: ({ conversationId, data }) => ({
+        url: `/service-provider/cha/ai-assistant/conversations/${conversationId}/feedback`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: (result, error, { conversationId }) => [
+        { type: 'CHAConversation', id: conversationId },
+      ],
+    }),
+
+    // GET /cha/ai-assistant/statistics/:serviceProviderId
+    getCHAConversationStatistics: builder.query<any, string>({
+      query: (serviceProviderId) => ({
+        url: `/service-provider/cha/ai-assistant/statistics/${serviceProviderId}`,
+      }),
+      providesTags: ['CHAStatistics'],
+    }),
+
     // ==================== DASHBOARD ====================
-    
+
     // Get CHA dashboard overview
     getCHADashboardOverview: builder.query<{ success: boolean; data: any }, string>({
       query: (serviceProviderId) => ({
         url: `/service-provider/cha/dashboard/${serviceProviderId}/overview`,
+      }),
+      providesTags: ['CHAStatistics'],
+    }),
+
+    // GET /cha/dashboard/:serviceProviderId/orders
+    getCHAOrderManagement: builder.query<any, { serviceProviderId: string } & Record<string, any>>({
+      query: ({ serviceProviderId, ...params }) => ({
+        url: `/service-provider/cha/dashboard/${serviceProviderId}/orders`,
+        params,
+      }),
+      providesTags: ['CHAOrders'],
+    }),
+
+    // GET /cha/dashboard/:serviceProviderId/ai-assistant
+    getCHAAIDashboard: builder.query<any, string>({
+      query: (serviceProviderId) => ({
+        url: `/service-provider/cha/dashboard/${serviceProviderId}/ai-assistant`,
+      }),
+      providesTags: ['CHAStatistics'],
+    }),
+
+    // GET /cha/dashboard/:serviceProviderId/contact
+    getCHAContactDashboard: builder.query<any, string>({
+      query: (serviceProviderId) => ({
+        url: `/service-provider/cha/dashboard/${serviceProviderId}/contact`,
+      }),
+      providesTags: ['Contact'],
+    }),
+
+    // GET /cha/dashboard/:serviceProviderId/analytics
+    getCHAPerformanceAnalytics: builder.query<any, { serviceProviderId: string } & Record<string, any>>({
+      query: ({ serviceProviderId, ...params }) => ({
+        url: `/service-provider/cha/dashboard/${serviceProviderId}/analytics`,
+        params,
       }),
       providesTags: ['CHAStatistics'],
     }),
@@ -476,4 +585,15 @@ export const {
   useRevokeCHAPermissionMutation,
   useResolveCHAConversationMutation,
   useGetCHADashboardOverviewQuery,
+  useGetCHAConversationHistoryQuery,
+  useGetCHAAIPermissionsQuery,
+  useUpdateCHAConversationPriorityMutation,
+  useAddCHAConversationTagsMutation,
+  useRemoveCHAConversationTagsMutation,
+  useAddCHAConversationFeedbackMutation,
+  useGetCHAConversationStatisticsQuery,
+  useGetCHAOrderManagementQuery,
+  useGetCHAAIDashboardQuery,
+  useGetCHAContactDashboardQuery,
+  useGetCHAPerformanceAnalyticsQuery,
 } = chaApi;

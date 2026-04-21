@@ -26,6 +26,7 @@ interface LoginResponse {
       username: string;
       email: string;
       role: string;
+      allowedServices?: string[];
       [key: string]: any;
     };
     accessToken: string;
@@ -130,17 +131,51 @@ export const authApi = apiService.injectEndpoints({
     }),
 
     /**
-     * Logout
-     * Clears all authentication data
+     * Refresh access token via service-provider backend
+     * POST /service-provider/users/refresh
+     */
+    refreshServiceProviderToken: builder.mutation<
+      { success: boolean; data: { accessToken: string; refreshToken: string } },
+      { refreshToken: string }
+    >({
+      query: (body) => ({
+        url: '/service-provider/service-provider/users/refresh',
+        method: 'POST',
+        body,
+      }),
+      async onQueryStarted(_args, { queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data.success && data.data) {
+            setAuthTokens(data.data.accessToken, data.data.refreshToken);
+          }
+        } catch (error) {
+          console.error('Token refresh failed:', error);
+        }
+      },
+    }),
+
+    /**
+     * Logout (server-side)
+     * POST /service-provider/users/logout
+     * Calls the backend to invalidate the session, then clears local data.
      */
     logoutServiceProvider: builder.mutation<void, void>({
-      queryFn: () => {
-        // Clear all auth data
-        clearAuthTokens();
-        localStorage.removeItem('user');
-        localStorage.removeItem('userRole');
-        
-        return { data: undefined };
+      query: () => ({
+        url: '/service-provider/service-provider/users/logout',
+        method: 'POST',
+      }),
+      async onQueryStarted(_args, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+        } catch (error) {
+          // Even if the server call fails, we still clear local state below
+          console.error('Server logout failed, clearing local state anyway:', error);
+        } finally {
+          clearAuthTokens();
+          localStorage.removeItem('user');
+          localStorage.removeItem('userRole');
+        }
       },
       invalidatesTags: ['Auth', 'User'],
     }),
@@ -172,6 +207,7 @@ export const authApi = apiService.injectEndpoints({
 export const {
   useLoginServiceProviderMutation,
   useRegisterServiceProviderMutation,
+  useRefreshServiceProviderTokenMutation,
   useLogoutServiceProviderMutation,
   useGetCurrentUserQuery,
   useLazyGetCurrentUserQuery,
@@ -268,7 +304,7 @@ export const getUserRole = (): string | null => {
  */
 export const getUserData = (): any | null => {
   const userData = localStorage.getItem('user');
-  
+
   if (userData) {
     try {
       return JSON.parse(userData);
@@ -277,6 +313,17 @@ export const getUserData = (): any | null => {
       return null;
     }
   }
-  
+
   return null;
+};
+
+/**
+ * Get the list of service sections this user is allowed to access.
+ * Admins see everything. Empty list means no restriction (legacy users).
+ */
+export const getAllowedServices = (): string[] => {
+  const user = getUserData();
+  if (!user) return [];
+  if (user.role === 'admin') return [];
+  return Array.isArray(user.allowedServices) ? user.allowedServices : [];
 };

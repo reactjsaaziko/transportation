@@ -1,7 +1,7 @@
-import { Calendar, ChevronDown, FileLock2, FileText, Phone, PhoneCall } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { AlertCircle, Calendar, ChevronDown, FileLock2, FileText, Loader2, Phone, PhoneCall } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { freightOrders } from './freightData';
+import { useGetFreightOrderByIdQuery } from '@/services/freightApi';
 
 const SectionCard = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="rounded-3xl border border-gray-200 bg-white shadow-sm">
@@ -20,7 +20,7 @@ const DetailInput = ({ label, value, icon }: { label: string; value: string; ico
   <div className="space-y-1">
     <div className="text-sm font-medium text-gray-500">{label}</div>
     <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
-      <span>{value}</span>
+      <span>{value || '-'}</span>
       {icon}
     </div>
   </div>
@@ -33,25 +33,61 @@ const TimelineButton = ({ label, icon }: { label: string; icon?: React.ReactNode
   </button>
 );
 
+const formatDate = (iso?: string) => {
+  if (!iso) return '-';
+  try {
+    return new Date(iso).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch {
+    return iso;
+  }
+};
+
 const FreightOrderDetails = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [isTimelineOpen, setIsTimelineOpen] = useState(true);
 
-  const order = useMemo(() => freightOrders.find((item) => item.id === orderId), [orderId]);
+  const { data, isLoading, isError, error } = useGetFreightOrderByIdQuery(orderId as string, {
+    skip: !orderId,
+  });
 
-  if (!order) {
-    return <div className="py-20 text-center text-gray-500">Freight order not found.</div>;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <span className="ml-3 text-gray-600">Loading freight order...</span>
+      </div>
+    );
   }
+
+  if (isError || !data?.data) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+        <p className="text-gray-600 mb-4">Failed to load freight order</p>
+        <p className="text-sm text-gray-400 mb-4">
+          {(error as any)?.data?.message || 'Order not found or unavailable'}
+        </p>
+        <button
+          onClick={() => navigate(-1)}
+          className="rounded-lg bg-blue-500 px-4 py-2 text-white font-medium hover:bg-blue-600"
+        >
+          Back
+        </button>
+      </div>
+    );
+  }
+
+  const order = data.data;
 
   return (
     <div className="pb-12">
       <div className="space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-            <Chip label={order.origin} />
-            {order.stopover && <Chip label={order.stopover} />}
-            <Chip label={order.destination} />
+            <Chip label={order.origin?.port || order.origin?.city || 'Origin'} />
+            {order.stopover && <Chip label={order.stopover.port || order.stopover.city} />}
+            <Chip label={order.destination?.port || order.destination?.city || 'Destination'} />
           </div>
           <button
             onClick={() => navigate(-1)}
@@ -63,20 +99,21 @@ const FreightOrderDetails = () => {
 
         <SectionCard title="Vessel & Documentation">
           <div className="grid gap-6 lg:grid-cols-4">
-            <DetailInput label="Vessel Name" value={order.vesselName} />
-            <DetailInput label="Shipping Line" value={order.shippingLine} />
-            <DetailInput label="Transit Time" value={order.transitTime} />
-            <DetailInput label="ETA" value="28/05/2023" />
-            <DetailInput label="ETA" value="01/05/2023" />
-            <DetailInput label="Cutoff Date" value="05/05/2023" />
+            <DetailInput label="Vessel Name" value={order.transport?.vesselName || '-'} />
+            <DetailInput label="Shipping Line" value={order.transport?.shippingLine || '-'} />
+            <DetailInput label="Transit Time" value={order.schedule?.transitTime || '-'} />
+            <DetailInput label="ETA" value={formatDate(order.schedule?.estimatedArrival)} />
+            <DetailInput label="ETD" value={formatDate(order.schedule?.estimatedDeparture)} />
+            <DetailInput label="Cargo Ready Date" value={formatDate(order.schedule?.cargoReadyDate)} />
           </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <TimelineButton label="BL Upload" icon={<FileLock2 className="h-4 w-4" />} />
-            <TimelineButton label="Invoice Packing" icon={<FileText className="h-4 w-4" />} />
-            <TimelineButton label="Booking Receipt" icon={<FileLock2 className="h-4 w-4" />} />
-            <TimelineButton label="Shipping Instruction" icon={<FileText className="h-4 w-4" />} />
-          </div>
+          {order.documents && order.documents.length > 0 && (
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {order.documents.map((doc, idx) => (
+                <TimelineButton key={`${doc.name}-${idx}`} label={doc.name} icon={<FileLock2 className="h-4 w-4" />} />
+              ))}
+            </div>
+          )}
 
           <div className="mt-6 rounded-2xl border border-gray-200">
             <button
@@ -88,132 +125,73 @@ const FreightOrderDetails = () => {
             </button>
             {isTimelineOpen && (
               <div className="space-y-3 border-t border-gray-100 px-4 py-4">
-                <TimelineButton label="Booking Receipt" icon={<FileLock2 className="h-4 w-4" />} />
-                <TimelineButton label="BL Draft" icon={<FileText className="h-4 w-4" />} />
-                <TimelineButton label="BL For Checking" icon={<FileLock2 className="h-4 w-4" />} />
-                <TimelineButton label="BL" icon={<FileLock2 className="h-4 w-4" />} />
+                {order.communications && order.communications.length > 0 ? (
+                  order.communications.map((c, idx) => (
+                    <TimelineButton key={`${c.type}-${idx}`} label={`${c.type}: ${c.content}`} icon={<FileText className="h-4 w-4" />} />
+                  ))
+                ) : (
+                  <div className="text-sm text-gray-500">No timeline events yet.</div>
+                )}
               </div>
             )}
           </div>
-
-          <div className="mt-6 grid gap-6 md:grid-cols-3">
-            <DetailInput
-              label="Document Handover"
-              value="14 Jan, 2023"
-              icon={<Calendar className="h-4 w-4 text-gray-500" />}
-            />
-            <TimelineButton label="Upload Invoice" icon={<FileLock2 className="h-4 w-4" />} />
-            <TimelineButton label="Payment Receipt" icon={<FileText className="h-4 w-4" />} />
-          </div>
         </SectionCard>
 
-        <SectionCard title="Tautliner (Curainsider) #Pick Up 1">
+        <SectionCard title="Cargo Details">
           <div className="grid gap-6 lg:grid-cols-[260px,1fr]">
             <div className="space-y-3 text-sm text-gray-600">
               <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                <div className="text-center text-gray-500">Cargo Volume : 29.50 m3</div>
-                <div className="text-center text-gray-500">Cargo Weight : 14,500.00 kg</div>
-              </div>
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm text-center text-gray-500">
-                Chart Placeholder
+                <div className="text-center text-gray-500">
+                  Cargo Volume : {order.cargo?.volume ? `${order.cargo.volume} m3` : '-'}
+                </div>
+                <div className="text-center text-gray-500">
+                  Cargo Weight : {order.cargo?.weight ? `${order.cargo.weight} kg` : '-'}
+                </div>
               </div>
             </div>
 
             <div className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <DetailInput label="Product" value={order.product} />
-                <DetailInput label="Types of Cargo" value={order.cargoType} />
-                <DetailInput label="Total" value={order.totalPackages} />
-                <DetailInput label="Cargo Volume" value={`${order.cargoVolume} (32% volume)`} />
-                <DetailInput label="Cargo Weight" value={`${order.cargoWeight} (1% of max weight)`} />
-              </div>
-
-              <div className="overflow-hidden rounded-2xl border border-gray-200">
-                <table className="min-w-full text-sm text-gray-700">
-                  <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    <tr>
-                      <th className="px-4 py-3 text-left">Name</th>
-                      <th className="px-4 py-3 text-left">Packages</th>
-                      <th className="px-4 py-3 text-left">Size</th>
-                      <th className="px-4 py-3 text-left">Weight</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-t border-gray-200">
-                      <td className="px-4 py-3">Big Bags</td>
-                      <td className="px-4 py-3">10</td>
-                      <td className="px-4 py-3">10*50*60cm</td>
-                      <td className="px-4 py-3">9000.00 kg</td>
-                    </tr>
-                    <tr className="border-t border-gray-200">
-                      <td className="px-4 py-3">Sacks</td>
-                      <td className="px-4 py-3">100</td>
-                      <td className="px-4 py-3">50*110*90cm</td>
-                      <td className="px-4 py-3">4500.00 kg</td>
-                    </tr>
-                    <tr className="border-t border-gray-200">
-                      <td className="px-4 py-3">Boxes</td>
-                      <td className="px-4 py-3">100</td>
-                      <td className="px-4 py-3">20*20*50cm</td>
-                      <td className="px-4 py-3">1000.00 kg</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <DetailInput label="Product" value={order.cargo?.product || '-'} />
+                <DetailInput label="Types of Cargo" value={order.cargo?.cargoType || '-'} />
+                <DetailInput
+                  label="Total"
+                  value={order.cargo?.packages ? `${order.cargo.packages} packages` : '-'}
+                />
+                <DetailInput
+                  label="Cargo Volume"
+                  value={order.cargo?.volume ? `${order.cargo.volume} m3` : '-'}
+                />
+                <DetailInput
+                  label="Cargo Weight"
+                  value={order.cargo?.weight ? `${order.cargo.weight} kg` : '-'}
+                />
+                <DetailInput label="HS Code" value={order.cargo?.hsCode || '-'} />
+                <DetailInput label="Container Type" value={order.cargo?.containerType || '-'} />
+                <DetailInput label="Mode" value={order.mode || '-'} />
+                <DetailInput label="Priority" value={order.priority || '-'} />
               </div>
             </div>
           </div>
         </SectionCard>
 
-        <SectionCard title="Tautliner (Curainsider) #Pick Up 2">
-          <div className="space-y-4 text-sm text-gray-600">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <DetailInput label="Product" value="Tea" />
-              <DetailInput label="Types of Cargo" value="Normal Container Cargo" />
-              <DetailInput label="Total" value="360 packages" />
-              <DetailInput label="Cargo Volume" value="42.25 m3 (32% volume)" />
-              <DetailInput label="Cargo Weight" value="17,500.00 kg (1% of max weight)" />
-            </div>
-
-            <div className="overflow-hidden rounded-2xl border border-gray-200">
-              <table className="min-w-full text-sm text-gray-700">
-                <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Name</th>
-                    <th className="px-4 py-3 text-left">Packages</th>
-                    <th className="px-4 py-3 text-left">Size</th>
-                    <th className="px-4 py-3 text-left">Weight</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-t border-gray-200">
-                    <td className="px-4 py-3">Big Bags</td>
-                    <td className="px-4 py-3">10</td>
-                    <td className="px-4 py-3">10*50*60cm</td>
-                    <td className="px-4 py-3">9000.00 kg</td>
-                  </tr>
-                  <tr className="border-t border-gray-200">
-                    <td className="px-4 py-3">Sacks</td>
-                    <td className="px-4 py-3">150</td>
-                    <td className="px-4 py-3">50*110*90cm</td>
-                    <td className="px-4 py-3">6750.00 kg</td>
-                  </tr>
-                  <tr className="border-t border-gray-200">
-                    <td className="px-4 py-3">Boxes</td>
-                    <td className="px-4 py-3">200</td>
-                    <td className="px-4 py-3">20*20*50cm</td>
-                    <td className="px-4 py-3">2000.00 kg</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+        <SectionCard title="Pricing">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <DetailInput label="Freight Charges" value={`${order.pricing?.currency || ''} ${order.pricing?.freightCharges ?? '-'}`.trim()} />
+            <DetailInput label="Handling Charges" value={`${order.pricing?.currency || ''} ${order.pricing?.handlingCharges ?? '-'}`.trim()} />
+            <DetailInput label="Customs Duty" value={`${order.pricing?.currency || ''} ${order.pricing?.customsDuty ?? '-'}`.trim()} />
+            <DetailInput label="Insurance" value={`${order.pricing?.currency || ''} ${order.pricing?.insurance ?? '-'}`.trim()} />
+            <DetailInput label="Additional Charges" value={`${order.pricing?.currency || ''} ${order.pricing?.additionalCharges ?? '-'}`.trim()} />
+            <DetailInput label="Discount" value={`${order.pricing?.currency || ''} ${order.pricing?.discount ?? '-'}`.trim()} />
+            <DetailInput label="Total" value={`${order.pricing?.currency || ''} ${order.pricing?.total ?? '-'}`.trim()} />
           </div>
         </SectionCard>
 
-        <SectionCard title="Contact & Factory Info">
+        <SectionCard title="Contact & Customer Info">
           <div className="grid gap-6 md:grid-cols-2">
             <DetailInput
-              label="Admin Contact Person"
-              value="Aaziko"
+              label="Customer"
+              value={order.customer?.name || '-'}
               icon={
                 <div className="flex gap-2">
                   <button className="rounded-full border border-gray-300 p-2 text-gray-500 hover:bg-gray-50">
@@ -225,28 +203,24 @@ const FreightOrderDetails = () => {
                 </div>
               }
             />
+            <DetailInput label="Company" value={order.customer?.companyName || '-'} />
+            <DetailInput label="Phone" value={order.customer?.phone || '-'} />
+            <DetailInput label="Email" value={order.customer?.email || '-'} />
             <DetailInput
-              label="Factory Address"
-              value="34, katargam GIDC, Surat"
-              icon={
-                <div className="flex gap-2">
-                  <button className="rounded-full border border-gray-300 p-2 text-gray-500 hover:bg-gray-50">
-                    <Phone className="h-4 w-4" />
-                  </button>
-                  <button className="rounded-full border border-gray-300 p-2 text-gray-500 hover:bg-gray-50">
-                    <PhoneCall className="h-4 w-4" />
-                  </button>
-                </div>
-              }
+              label="Address"
+              value={order.customer?.address || '-'}
+              icon={<Calendar className="h-4 w-4 text-gray-500" />}
             />
           </div>
 
-          <div className="mt-4 space-y-2">
-            <div className="text-sm font-semibold text-gray-600">Note :</div>
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
-              Factory Stuffing
+          {order.notes && (
+            <div className="mt-4 space-y-2">
+              <div className="text-sm font-semibold text-gray-600">Note :</div>
+              <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
+                {order.notes}
+              </div>
             </div>
-          </div>
+          )}
         </SectionCard>
       </div>
     </div>

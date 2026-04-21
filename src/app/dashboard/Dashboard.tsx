@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router';
+import { getAllowedServices } from '../../services/authApi';
 import Header from '../../components/dashboard/Header';
 import Sidebar from '../../components/dashboard/Sidebar';
 import FloatingSupport from '../../components/common/FloatingSupport';
@@ -79,7 +80,13 @@ const getDefaultMenuForTab = (tab: string) => {
 };
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState('Domestic Transportation');
+  const allowedServices = useMemo(() => getAllowedServices(), []);
+  const initialTab = allowedServices.length === 0
+    ? 'Domestic Transportation'
+    : (allowedServices.includes('Domestic Transportation')
+        ? 'Domestic Transportation'
+        : allowedServices[0]);
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -225,9 +232,15 @@ const Dashboard = () => {
               <Route
                 path="*"
                 element={
-                  <div className="py-20 text-center text-gray-500">
-                    Select an option from the sidebar
-                  </div>
+                  allowedServices.length > 0 && !allowedServices.some((svc) =>
+                    [activeTab].includes(svc),
+                  ) ? (
+                    <Navigate to={`/dashboard/${getDefaultMenuForTab(initialTab)}`} replace />
+                  ) : (
+                    <div className="py-20 text-center text-gray-500">
+                      Select an option from the sidebar
+                    </div>
+                  )
                 }
               />
             </Routes>

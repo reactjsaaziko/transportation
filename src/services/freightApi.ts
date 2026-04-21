@@ -345,6 +345,12 @@ export const freightApi = apiService.injectEndpoints({
       providesTags: ['FreightPricing'],
     }),
 
+    // GET /freight/pricing/:id
+    getFreightPricingById: builder.query({
+      query: (id) => `/service-provider/freight/pricing/${id}`,
+      providesTags: (_result, _error, id) => [{ type: 'FreightPricing', id }],
+    }),
+
     updateFreightPricing: builder.mutation({
       query: ({ id, ...data }) => ({
         url: `/service-provider/freight/pricing/${id}`,
@@ -391,6 +397,7 @@ export const {
   useGetFreightStatisticsQuery,
   useCreateFreightPricingMutation,
   useGetFreightPricingsByServiceProviderQuery,
+  useGetFreightPricingByIdQuery,
   useUpdateFreightPricingMutation,
   useDeleteFreightPricingMutation,
   useBatchCreateFreightPricingsMutation,

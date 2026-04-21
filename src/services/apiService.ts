@@ -452,6 +452,24 @@ export const apiService = createApi({
     "WorkAssignment",
     "WorkRequests",
     "WorkRequest",
+
+    // Inquiry & Detailed Form tags
+    "Inquiries",
+    "Inquiry",
+    "DetailedForms",
+    "DetailedForm",
+
+    // AI Assistant tags (transport / warehouse / freight)
+    "AIConversations",
+    "AIConversation",
+    "WarehouseAIConversations",
+    "WarehouseAIConversation",
+    "FreightAIConversations",
+    "FreightAIConversation",
+
+    // Ports tags
+    "Ports",
+    "Port",
   ],
 });
 

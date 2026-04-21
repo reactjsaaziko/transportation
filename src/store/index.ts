@@ -13,12 +13,21 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // Ignore these action types
-        ignoredActions: ['apiService/executeQuery/pending'],
-        // Ignore these field paths in all actions
-        ignoredActionPaths: ['meta.arg', 'payload.timestamp'],
-        // Ignore these paths in the state
-        ignoredPaths: ['apiService.queries'],
+        ignoredActions: [
+          'apiService/executeQuery/pending',
+          'apiService/executeQuery/fulfilled',
+          'apiService/executeQuery/rejected',
+          'apiService/executeMutation/pending',
+          'apiService/executeMutation/fulfilled',
+          'apiService/executeMutation/rejected',
+        ],
+        ignoredActionPaths: [
+          'meta.arg',
+          'meta.baseQueryMeta.request',
+          'meta.baseQueryMeta.response',
+          'payload.timestamp',
+        ],
+        ignoredPaths: ['apiService.queries', 'apiService.mutations'],
       },
     }).concat(apiService.middleware),
 });

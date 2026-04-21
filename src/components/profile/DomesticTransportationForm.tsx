@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { MapPin, Upload, X, FileText } from 'lucide-react';
+import { useSubmitServiceProviderInquiryMutation } from '@/services/inquiryApi';
 
 // Floating Label Input Component
 const FloatingInput = ({
@@ -216,6 +217,7 @@ const DomesticTransportationForm = () => {
     lastName: '',
     contactNo: '',
     email: '',
+    password: '',
     companyName: '',
     gstNo: '',
     address: '',
@@ -276,6 +278,75 @@ const DomesticTransportationForm = () => {
     setDocuments((prev) => ({ ...prev, [field]: file }));
   };
 
+  const [submitInquiry, { isLoading: isSubmitting }] = useSubmitServiceProviderInquiryMutation();
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const handleSubmit = async () => {
+    setFeedback(null);
+
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.contactNo || !formData.companyName) {
+      setFeedback({
+        type: 'error',
+        message: 'Please fill first name, last name, email, contact number, and company name.',
+      });
+      return;
+    }
+
+    if (!formData.password || formData.password.length < 6) {
+      setFeedback({
+        type: 'error',
+        message: 'Please choose a password (at least 6 characters). You will use this to log in once approved.',
+      });
+      return;
+    }
+
+    const selectedServices = Object.entries(formData.additionalServices)
+      .filter(([, checked]) => checked)
+      .map(([key]) => key)
+      .join(', ');
+
+    const descriptionParts = [
+      formData.serviceType && `Service Type: ${formData.serviceType}`,
+      formData.vehicleTypes && `Vehicle Types: ${formData.vehicleTypes}`,
+      formData.fleetSize && `Fleet Size: ${formData.fleetSize}`,
+      formData.coverageArea && `Coverage Area: ${formData.coverageArea}`,
+      formData.yearsOfExperience && `Years of Experience: ${formData.yearsOfExperience}`,
+      formData.primaryOperatingStates && `Primary States: ${formData.primaryOperatingStates}`,
+      formData.majorCitiesCovered && `Major Cities: ${formData.majorCitiesCovered}`,
+      formData.specializedRoutes && `Specialized Routes: ${formData.specializedRoutes}`,
+      formData.pricingModel && `Pricing Model: ${formData.pricingModel}`,
+      formData.baseRate && `Base Rate: ${formData.baseRate}`,
+      formData.paymentTerms && `Payment Terms: ${formData.paymentTerms}`,
+      formData.gstNo && `GST No: ${formData.gstNo}`,
+      formData.address && `Address: ${formData.address}`,
+      selectedServices && `Additional Services: ${selectedServices}`,
+    ].filter(Boolean);
+
+    const username = `${formData.firstName}${formData.lastName}`.toLowerCase().replace(/\s+/g, '');
+
+    try {
+      await submitInquiry({
+        username,
+        workEmail: formData.email,
+        password: formData.password,
+        contactNo: formData.contactNo,
+        companyName: formData.companyName,
+        serviceType: 'Domestic Transportation',
+        description: descriptionParts.join(' | ') || 'Domestic Transportation service inquiry',
+      }).unwrap();
+
+      setFeedback({
+        type: 'success',
+        message: 'Inquiry submitted successfully. An admin will review and email your login credentials.',
+      });
+    } catch (err: any) {
+      setFeedback({
+        type: 'error',
+        message: err?.data?.message || 'Failed to submit inquiry. Please try again.',
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Personal Information */}
@@ -313,11 +384,21 @@ const DomesticTransportationForm = () => {
             required
           />
           <FloatingInput
+            label="Password (min 6 chars)"
+            type="password"
+            value={formData.password}
+            onChange={(value) => handleInputChange('password', value)}
+            required
+          />
+          <FloatingInput
             label="Company Name"
             value={formData.companyName}
             onChange={(value) => handleInputChange('companyName', value)}
             required
           />
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mb-4">
           <FloatingInput
             label="GST No"
             value={formData.gstNo}
@@ -611,10 +692,28 @@ const DomesticTransportationForm = () => {
         </div>
       </div>
 
+      {/* Feedback */}
+      {feedback && (
+        <div
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            feedback.type === 'success'
+              ? 'border-green-200 bg-green-50 text-green-700'
+              : 'border-red-200 bg-red-50 text-red-700'
+          }`}
+        >
+          {feedback.message}
+        </div>
+      )}
+
       {/* Submit Button */}
       <div className="flex justify-center">
-        <button className="rounded-lg bg-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600">
-          Submit
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="rounded-lg bg-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-blue-300"
+        >
+          {isSubmitting ? 'Submitting...' : 'Submit'}
         </button>
       </div>
     </div>

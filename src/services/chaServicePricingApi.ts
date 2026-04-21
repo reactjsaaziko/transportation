@@ -89,16 +89,25 @@ export const chaServicePricingApi = apiService.injectEndpoints({
     }),
 
     // Get available ports from searates database
-    getAvailablePorts: builder.query<{ 
-      success: boolean; 
-      message: string; 
-      data: Array<{ name: string; country: string; code: string }>; 
-      total?: number 
+    getAvailablePorts: builder.query<{
+      success: boolean;
+      message: string;
+      data: Array<{ name: string; country: string; code: string }>;
+      total?: number
     }, { search?: string; country?: string }>({
       query: (params = {}) => ({
         url: '/service-provider/ports/names',
         params,
       }),
+    }),
+
+    // GET /cha/service-pricing/ports — ports tied to CHA service pricing
+    getCHAServicePricingPorts: builder.query<any, Record<string, any> | void>({
+      query: (params) => ({
+        url: '/service-provider/cha/service-pricing/ports',
+        params: params || {},
+      }),
+      providesTags: ['CHAServicePricing'],
     }),
   }),
 });
@@ -113,4 +122,5 @@ export const {
   useUpdateCHAServicePricingMutation,
   useDeleteCHAServicePricingMutation,
   useGetAvailablePortsQuery,
+  useGetCHAServicePricingPortsQuery,
 } = chaServicePricingApi;

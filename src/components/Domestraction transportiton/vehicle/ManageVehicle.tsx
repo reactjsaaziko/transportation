@@ -25,10 +25,16 @@ const ManageVehicle = () => {
     { id: 'water', label: 'Water', icon: '🚢' },
   ];
 
-  // Filter vehicles by transport mode
-  const vehicles = vehiclesResponse?.data?.filter(
+  // Filter vehicles by transport mode (backend wraps as data: { items, pagination })
+  const rawVehicles = vehiclesResponse?.data as any;
+  const vehicleList: VehicleType[] = Array.isArray(rawVehicles?.items)
+    ? rawVehicles.items
+    : Array.isArray(rawVehicles)
+    ? rawVehicles
+    : [];
+  const vehicles = vehicleList.filter(
     (vehicle: VehicleType) => vehicle.transportationMode === selectedTransportMode
-  ) || [];
+  );
 
   return (
     <div className="bg-white rounded-lg p-6">

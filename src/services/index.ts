@@ -1,6 +1,6 @@
 /**
  * Central export for all API services
- * 
+ *
  * This file re-exports all API hooks and types for easy importing
  * throughout the application.
  */
@@ -13,6 +13,7 @@ export {
   authApi,
   useLoginServiceProviderMutation,
   useRegisterServiceProviderMutation,
+  useRefreshServiceProviderTokenMutation,
   useLogoutServiceProviderMutation,
   useGetCurrentUserQuery as useGetAuthCurrentUserQuery,
   useLazyGetCurrentUserQuery,
@@ -53,6 +54,7 @@ export {
   useGetServiceProviderByIdQuery,
   useGetServiceProvidersByTypeQuery,
   useUpdateServiceProviderMutation,
+  useDeleteServiceProviderMutation,
   useGetAdminStatisticsQuery,
 } from './serviceProviderApi';
 
@@ -131,6 +133,12 @@ export {
   useAddFreightFeedbackMutation,
   useAddFreightTagsMutation,
   useGetFreightStatisticsQuery,
+  useCreateFreightPricingMutation,
+  useGetFreightPricingsByServiceProviderQuery,
+  useGetFreightPricingByIdQuery,
+  useUpdateFreightPricingMutation,
+  useDeleteFreightPricingMutation,
+  useBatchCreateFreightPricingsMutation,
 } from './freightApi';
 
 // CHA API
@@ -158,7 +166,148 @@ export {
   useRevokeCHAPermissionMutation,
   useResolveCHAConversationMutation,
   useGetCHADashboardOverviewQuery,
+  useGetCHAConversationHistoryQuery,
+  useGetCHAAIPermissionsQuery,
+  useUpdateCHAConversationPriorityMutation,
+  useAddCHAConversationTagsMutation,
+  useRemoveCHAConversationTagsMutation,
+  useAddCHAConversationFeedbackMutation,
+  useGetCHAConversationStatisticsQuery,
+  useGetCHAOrderManagementQuery,
+  useGetCHAAIDashboardQuery,
+  useGetCHAContactDashboardQuery,
+  useGetCHAPerformanceAnalyticsQuery,
 } from './chaApi';
+
+// CHA Service Pricing API
+export {
+  chaServicePricingApi,
+  useCreateCHAServicePricingMutation,
+  useGetCHAServicePricingsQuery,
+  useGetCHAServicePricingsByServiceProviderQuery,
+  useLazyGetCHAServicePricingsByServiceProviderQuery,
+  useGetCHAServicePricingByIdQuery,
+  useUpdateCHAServicePricingMutation,
+  useDeleteCHAServicePricingMutation,
+  useGetAvailablePortsQuery,
+  useGetCHAServicePricingPortsQuery,
+} from './chaServicePricingApi';
+
+// Inquiry API (public inquiry + admin approval + detailed-form workflow)
+export {
+  inquiryApi,
+  useSubmitServiceProviderInquiryMutation,
+  useSubmitPublicInquiryMutation,
+  useGetPublicServiceProvidersQuery,
+  useGetPublicServiceProviderByIdQuery,
+  useGetInquiriesQuery,
+  useApproveInquiryMutation,
+  useResendInquiryCredentialsMutation,
+  useGetDetailedFormQuery,
+  useSubmitDetailedFormMutation,
+  useSendDetailedFormMutation,
+  useGetPendingReviewFormsQuery,
+  useGetFormForReviewQuery,
+  useReviewDetailedFormMutation,
+  useGetWorkflowStatisticsQuery,
+} from './inquiryApi';
+
+// Work Assignment API (admin ↔ service-provider assignment workflow)
+export {
+  workAssignmentApi,
+  useCreateWorkAssignmentMutation,
+  useGetAllWorkAssignmentsQuery,
+  useGetWorkAssignmentStatisticsQuery,
+  useGetWorkAssignmentByIdQuery,
+  useUpdateWorkAssignmentMutation,
+  useCancelWorkAssignmentMutation,
+  useReviewWorkAssignmentMutation,
+  useGetMyWorkAssignmentsQuery,
+  useAcknowledgeWorkAssignmentMutation,
+  useDeclineWorkAssignmentMutation,
+  useStartWorkAssignmentMutation,
+  useAddWorkAssignmentProgressMutation,
+  useSubmitWorkAssignmentForReviewMutation,
+  useAddWorkAssignmentMessageMutation,
+} from './workAssignmentApi';
+
+// Work Request API (broadcast work-request workflow)
+export {
+  workRequestApi,
+  useCreateWorkRequestMutation,
+  useGetAllWorkRequestsQuery,
+  useGetWorkRequestStatisticsQuery,
+  useGetWorkRequestResponsesQuery,
+  useExtendWorkRequestExpiryMutation,
+  useCancelWorkRequestMutation,
+  useCleanupExpiredWorkRequestsMutation,
+  useGetAvailableWorkRequestsQuery,
+  useViewWorkRequestQuery,
+  useExpressInterestInWorkRequestMutation,
+  useAcceptWorkRequestMutation,
+  useDeclineWorkRequestMutation,
+} from './workRequestApi';
+
+// Transport AI Assistant API (legacy /ai-assistant/*)
+export {
+  transportAIAssistantApi,
+  useStartConversationMutation,
+  useContinueConversationMutation,
+  useGetConversationQuery,
+  useResolveConversationMutation,
+  useAddConversationFeedbackMutation,
+  useMarkMessageHelpfulMutation,
+  useGetAIUsageAnalyticsQuery,
+  useGetConversationSuggestionsQuery,
+} from './transportAIAssistantApi';
+
+// Warehouse AI Assistant API
+export {
+  warehouseAIAssistantApi,
+  useCreateWarehouseAIConversationMutation,
+  useGetWarehouseAIConversationByIdQuery,
+  useGetWarehouseAIConversationsQuery,
+  useGetActiveWarehouseAIConversationsQuery,
+  useGetWarehouseAIConversationHistoryQuery,
+  useAddWarehouseAIMessageMutation,
+  useGrantWarehouseAIPermissionMutation,
+  useRevokeWarehouseAIPermissionMutation,
+  useGetWarehouseAIPermissionsQuery,
+  useResolveWarehouseAIConversationMutation,
+  useAddWarehouseAIFeedbackMutation,
+  useGetWarehouseAIStatisticsQuery,
+} from './warehouseAIAssistantApi';
+
+// Freight AI Assistant API
+export {
+  freightAIAssistantApi,
+  useCreateFreightAIConversationMutation,
+  useGetFreightAIConversationByIdQuery,
+  useGetFreightAIConversationsQuery,
+  useGetActiveFreightAIConversationsQuery,
+  useGetFreightAIConversationHistoryQuery,
+  useAddFreightAIMessageMutation,
+  useGrantFreightAIPermissionMutation,
+  useRevokeFreightAIPermissionMutation,
+  useGetFreightAIPermissionsQuery,
+  useUpdateFreightAIPriorityMutation,
+  useAddFreightAITagsMutation,
+  useRemoveFreightAITagsMutation,
+  useResolveFreightAIConversationMutation,
+  useAddFreightAIFeedbackMutation,
+  useGetFreightAIStatisticsQuery,
+} from './freightAIAssistantApi';
+
+// Ports API
+export {
+  portsApi,
+  useGetPortsQuery,
+  useGetPortNamesQuery,
+  useSearchPortsQuery,
+  useGetPortStatisticsQuery,
+  useGetPortsByCountryQuery,
+  useGetPortByIdQuery,
+} from './portsApi';
 
 // Re-export types
 export type { Vehicle, VehicleType, VehicleModel, VehicleFilters } from './vehicleApi';
@@ -166,9 +315,14 @@ export type { Trip, TripFilters, TripStatistics, CreateTripData } from './tripAp
 export type { Warehouse, WarehouseTransaction, WarehouseFilters, TransactionFilters } from './warehouseApi';
 export type { FreightOrder, FreightOrderFilters, FreightStatistics } from './freightApi';
 export type { CHAOrder, CHAConversation, CHAOrderFilters, CHAStatistics } from './chaApi';
-export type { 
-  DashboardOverview, 
-  ContactInfo, 
-  AIPermissions, 
-  ServiceProviderProfile 
+export type {
+  CHAServicePricing,
+  CreateCHAServicePricingRequest,
+  UpdateCHAServicePricingRequest,
+} from './chaServicePricingApi';
+export type {
+  DashboardOverview,
+  ContactInfo,
+  AIPermissions,
+  ServiceProviderProfile,
 } from './serviceProviderApi';

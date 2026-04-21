@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -9,6 +9,7 @@ import {
   ClipboardCheck,
   Shield,
 } from 'lucide-react';
+import { getAllowedServices } from '../../services/authApi';
 
 interface SidebarProps {
   activeMenu: string;
@@ -121,6 +122,14 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [expandedService, setExpandedService] = useState<string | null>(activeTab);
   const [isVehicleOpen, setIsVehicleOpen] = useState(true);
 
+  // Filter service tabs by user's approved services. Empty list (admin or
+  // legacy user with no allowedServices) shows everything.
+  const visibleTabs = useMemo(() => {
+    const allowed = getAllowedServices();
+    if (!allowed.length) return serviceTabs;
+    return serviceTabs.filter((tab) => allowed.includes(tab.id));
+  }, []);
+
   const handleTabClick = (tabId: string) => {
     if (expandedService === tabId) {
       setExpandedService(null);
@@ -224,7 +233,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           Services
         </h3>
         <div className="space-y-1">
-          {serviceTabs.map((tab) => {
+          {visibleTabs.map((tab) => {
             const Icon = tab.icon;
             const isExpanded = expandedService === tab.id;
             const isActive = activeTab === tab.id;

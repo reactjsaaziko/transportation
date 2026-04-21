@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useSubmitServiceProviderInquiryMutation } from '@/services/inquiryApi';
 import { MapPin, Upload, X, FileText } from 'lucide-react';
 
 // Floating Label Input Component
@@ -198,6 +199,7 @@ const CHAProfileForm = () => {
     lastName: '',
     contactNo: '',
     email: '',
+    password: '',
     companyName: '',
     gstNo: '',
     address: '',
@@ -273,6 +275,75 @@ const CHAProfileForm = () => {
     });
   };
 
+  const [submitInquiry, { isLoading: isSubmitting }] = useSubmitServiceProviderInquiryMutation();
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const handleSubmit = async () => {
+    setFeedback(null);
+
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.contactNo || !formData.companyName) {
+      setFeedback({
+        type: 'error',
+        message: 'Please fill first name, last name, email, contact number, and company name.',
+      });
+      return;
+    }
+
+    if (!formData.password || formData.password.length < 6) {
+      setFeedback({
+        type: 'error',
+        message: 'Please choose a password (at least 6 characters). You will use this to log in once approved.',
+      });
+      return;
+    }
+
+    const pickEnabled = (obj: Record<string, boolean>) =>
+      Object.entries(obj).filter(([, v]) => v).map(([k]) => k).join(', ');
+
+    const descriptionParts = [
+      formData.chaLicenseNumber && `CHA License: ${formData.chaLicenseNumber}`,
+      formData.licenseIssueDate && `License Issued: ${formData.licenseIssueDate}`,
+      formData.licenseValidity && `License Valid Till: ${formData.licenseValidity}`,
+      formData.primaryPort && `Primary Port: ${formData.primaryPort}`,
+      formData.secondaryPorts && `Secondary Ports: ${formData.secondaryPorts}`,
+      formData.coverageAreaDetails && `Coverage: ${formData.coverageAreaDetails}`,
+      formData.specialEquipment && `Equipment: ${formData.specialEquipment}`,
+      formData.yearsOfExperience && `Experience: ${formData.yearsOfExperience} yrs`,
+      formData.teamSize && `Team Size: ${formData.teamSize}`,
+      formData.specializations && `Specializations: ${formData.specializations}`,
+      formData.gstNo && `GST No: ${formData.gstNo}`,
+      formData.address && `Address: ${formData.address}`,
+      pickEnabled(importServices) && `Import Services: ${pickEnabled(importServices)}`,
+      pickEnabled(exportServices) && `Export Services: ${pickEnabled(exportServices)}`,
+      pickEnabled(cargoTypes) && `Cargo Types: ${pickEnabled(cargoTypes)}`,
+      pickEnabled(specialPermits) && `Permits: ${pickEnabled(specialPermits)}`,
+    ].filter(Boolean);
+
+    const username = `${formData.firstName}${formData.lastName}`.toLowerCase().replace(/\s+/g, '');
+
+    try {
+      await submitInquiry({
+        username,
+        workEmail: formData.email,
+        password: formData.password,
+        contactNo: formData.contactNo,
+        companyName: formData.companyName,
+        serviceType: 'CHA',
+        description: descriptionParts.join(' | ') || 'CHA service inquiry',
+      }).unwrap();
+
+      setFeedback({
+        type: 'success',
+        message: 'Inquiry submitted successfully. An admin will review and email your login credentials.',
+      });
+    } catch (err: any) {
+      setFeedback({
+        type: 'error',
+        message: err?.data?.message || 'Failed to submit inquiry. Please try again.',
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Personal Information */}
@@ -310,11 +381,21 @@ const CHAProfileForm = () => {
             required
           />
           <FloatingInput
+            label="Password (min 6 chars)"
+            type="password"
+            value={formData.password}
+            onChange={(value) => handleInputChange('password', value)}
+            required
+          />
+          <FloatingInput
             label="Company Name"
             value={formData.companyName}
             onChange={(value) => handleInputChange('companyName', value)}
             required
           />
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mb-4">
           <FloatingInput
             label="GST No"
             value={formData.gstNo}
@@ -722,10 +803,28 @@ const CHAProfileForm = () => {
         />
       </div>
 
+      {/* Feedback */}
+      {feedback && (
+        <div
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            feedback.type === 'success'
+              ? 'border-green-200 bg-green-50 text-green-700'
+              : 'border-red-200 bg-red-50 text-red-700'
+          }`}
+        >
+          {feedback.message}
+        </div>
+      )}
+
       {/* Submit Button */}
       <div className="flex justify-center">
-        <button className="rounded-lg bg-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600">
-          Submit
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="rounded-lg bg-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-blue-300"
+        >
+          {isSubmitting ? 'Submitting...' : 'Submit'}
         </button>
       </div>
     </div>

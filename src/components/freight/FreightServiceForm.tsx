@@ -220,23 +220,15 @@ const FreightServiceForm = () => {
             {/* Container */}
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Container</label>
-              <div className="rounded-xl border border-gray-300 bg-white p-3">
-                <div className="grid gap-2 text-sm text-gray-600">
-                  {containerOptions.map((option) => (
-                    <label key={option} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded px-2 py-1">
-                      <input 
-                        type="radio" 
-                        name="container" 
-                        value={option}
-                        checked={formData.containerType === option}
-                        onChange={(e) => setFormData({ ...formData, containerType: e.target.value })}
-                        className="h-4 w-4" 
-                      />
-                      {option}
-                    </label>
-                  ))}
-                </div>
-              </div>
+              <select
+                value={formData.containerType}
+                onChange={(e) => setFormData({ ...formData, containerType: e.target.value })}
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+              >
+                {containerOptions.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
             </div>
 
             {/* T/T and Rates */}

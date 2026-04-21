@@ -179,6 +179,18 @@ export const serviceProviderApi = apiService.injectEndpoints({
       ],
     }),
 
+    // DELETE /service-providers/:id
+    deleteServiceProvider: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (id) => ({
+        url: `/service-provider/service-providers/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, id) => [
+        { type: 'ServiceProvider', id },
+        'ServiceProviders',
+      ],
+    }),
+
     // ==================== STATISTICS ====================
     
     // Get admin statistics
@@ -205,5 +217,6 @@ export const {
   useGetServiceProviderByIdQuery,
   useGetServiceProvidersByTypeQuery,
   useUpdateServiceProviderMutation,
+  useDeleteServiceProviderMutation,
   useGetAdminStatisticsQuery,
 } = serviceProviderApi;

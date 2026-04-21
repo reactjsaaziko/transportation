@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MapPin, Phone } from 'lucide-react';
+import { useSubmitServiceProviderInquiryMutation } from '@/services/inquiryApi';
 
 // Floating Label Input Component
 const FloatingInput = ({
@@ -108,6 +109,7 @@ const FreightForwardingForm = () => {
     lastName: '',
     contactNo: '',
     email: '',
+    password: '',
     companyName: '',
     gstNo: '',
     address: '',
@@ -128,6 +130,69 @@ const FreightForwardingForm = () => {
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const [submitInquiry, { isLoading: isSubmitting }] = useSubmitServiceProviderInquiryMutation();
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const handleSubmit = async () => {
+    setFeedback(null);
+
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.contactNo || !formData.companyName) {
+      setFeedback({
+        type: 'error',
+        message: 'Please fill first name, last name, email, contact number, and company name.',
+      });
+      return;
+    }
+
+    if (!formData.password || formData.password.length < 6) {
+      setFeedback({
+        type: 'error',
+        message: 'Please choose a password (at least 6 characters). You will use this to log in once approved.',
+      });
+      return;
+    }
+
+    const descriptionParts = [
+      formData.country && `Country: ${formData.country}`,
+      formData.lclFcl && `LCL/FCL: ${formData.lclFcl}`,
+      formData.cargo && `Cargo: ${formData.cargo}`,
+      formData.enableApi && 'API Enabled: Yes',
+      formData.contactPerson && `Contact Person: ${formData.contactPerson}`,
+      formData.contactNumber && `Alt Contact: ${formData.contactNumber}`,
+      formData.gstNo && `GST No: ${formData.gstNo}`,
+      formData.address && `Address: ${formData.address}`,
+      formData.accountNumber && `Account: ${formData.accountNumber}`,
+      formData.ifscCode && `IFSC: ${formData.ifscCode}`,
+      formData.paymentTerm && `Payment Term: ${formData.paymentTerm}`,
+      formData.transactionalCurrency && `Transactional Currency: ${formData.transactionalCurrency}`,
+      formData.operationalCurrency && `Operational Currency: ${formData.operationalCurrency}`,
+    ].filter(Boolean);
+
+    const username = `${formData.firstName}${formData.lastName}`.toLowerCase().replace(/\s+/g, '');
+
+    try {
+      await submitInquiry({
+        username,
+        workEmail: formData.email,
+        password: formData.password,
+        contactNo: formData.contactNo,
+        companyName: formData.companyName,
+        serviceType: 'Freight Forwarding',
+        description: descriptionParts.join(' | ') || 'Freight Forwarding service inquiry',
+      }).unwrap();
+
+      setFeedback({
+        type: 'success',
+        message: 'Inquiry submitted successfully. An admin will review and email your login credentials.',
+      });
+    } catch (err: any) {
+      setFeedback({
+        type: 'error',
+        message: err?.data?.message || 'Failed to submit inquiry. Please try again.',
+      });
+    }
   };
 
   return (
@@ -167,11 +232,21 @@ const FreightForwardingForm = () => {
             required
           />
           <FloatingInput
+            label="Password (min 6 chars)"
+            type="password"
+            value={formData.password}
+            onChange={(value) => handleInputChange('password', value)}
+            required
+          />
+          <FloatingInput
             label="Company Name"
             value={formData.companyName}
             onChange={(value) => handleInputChange('companyName', value)}
             required
           />
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mb-4">
           <FloatingInput
             label="GST No"
             value={formData.gstNo}
@@ -360,10 +435,22 @@ const FreightForwardingForm = () => {
         </div>
       </div>
 
+      {/* Feedback */}
+      {feedback && (
+        <div className={`rounded-lg border px-4 py-3 text-sm ${feedback.type === 'success' ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'}`}>
+          {feedback.message}
+        </div>
+      )}
+
       {/* Submit Button */}
       <div className="flex justify-center">
-        <button className="rounded-lg bg-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600">
-          Submit
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="rounded-lg bg-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-blue-300"
+        >
+          {isSubmitting ? 'Submitting...' : 'Submit'}
         </button>
       </div>
     </div>

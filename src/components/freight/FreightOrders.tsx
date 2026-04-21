@@ -1,7 +1,14 @@
 import { useMemo, useState } from 'react';
-import { Calendar, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
+import { Calendar, Loader2, RefreshCw, AlertCircle, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGetFreightOrdersQuery, useUpdateFreightOrderStatusMutation, type FreightOrder } from '@/services/freightApi';
+import {
+  useGetMyWorkAssignmentsQuery,
+  useAcknowledgeWorkAssignmentMutation,
+  useCancelWorkAssignmentMutation,
+  useStartWorkAssignmentMutation,
+  useSubmitWorkAssignmentForReviewMutation,
+} from '@/services/workAssignmentApi';
 
 // Map UI tabs to API status values
 const statusMap: Record<string, string> = {
@@ -13,6 +20,14 @@ const statusMap: Record<string, string> = {
 
 const tabs = ['Yet to confirm', 'Current', 'Upcoming', 'Completed'] as const;
 type TabType = typeof tabs[number];
+
+// Admin work-assignment status for each UI tab
+const waStatusByTab: Record<TabType, string> = {
+  'Yet to confirm': 'pending',
+  Upcoming: 'acknowledged',
+  Current: 'in_progress',
+  Completed: 'completed',
+};
 
 const RouteChip = ({ label }: { label: string }) => (
   <span className="rounded-full border border-dashed border-blue-200 bg-blue-50 px-4 py-1 text-xs font-semibold text-blue-600">
@@ -35,7 +50,7 @@ const FreightOrders = () => {
 
   // Get service provider ID from localStorage (set after login)
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const serviceProviderId = user?.id || user?._id || '';
+  const serviceProviderId = user?.serviceProviderId || user?.id || user?._id || '';
 
   // Fetch freight orders from API
   const { 
@@ -58,10 +73,96 @@ const FreightOrders = () => {
   // Mutation for updating order status
   const [updateStatus, { isLoading: isUpdating }] = useUpdateFreightOrderStatusMutation();
 
+  const { data: adminAssignedResponse, refetch: refetchAdminAssigned } =
+    useGetMyWorkAssignmentsQuery(
+      {
+        serviceProviderId,
+        serviceType: 'Freight Forwarding',
+        status: waStatusByTab[activeTab],
+      },
+      { skip: !serviceProviderId },
+    );
+
+  // Completed tab also needs to show jobs the provider has submitted for review
+  // but admin hasn't approved yet (status: pending_review).
+  const { data: pendingReviewResponse, refetch: refetchPendingReview } =
+    useGetMyWorkAssignmentsQuery(
+      {
+        serviceProviderId,
+        serviceType: 'Freight Forwarding',
+        status: 'pending_review',
+      },
+      { skip: !serviceProviderId || activeTab !== 'Completed' },
+    );
+
+  const [acknowledgeWA, { isLoading: isAcknowledging }] =
+    useAcknowledgeWorkAssignmentMutation();
+  const [cancelWA, { isLoading: isCancellingWA }] =
+    useCancelWorkAssignmentMutation();
+  const [startWA, { isLoading: isStarting }] =
+    useStartWorkAssignmentMutation();
+  const [submitWA, { isLoading: isSubmittingWA }] =
+    useSubmitWorkAssignmentForReviewMutation();
+
+  const adminAssignedJobs: any[] = useMemo(() => {
+    const raw = adminAssignedResponse as any;
+    const base = Array.isArray(raw?.data) ? raw.data : [];
+    if (activeTab !== 'Completed') return base;
+    const pr = pendingReviewResponse as any;
+    const pending = Array.isArray(pr?.data) ? pr.data : [];
+    return [...pending, ...base];
+  }, [adminAssignedResponse, pendingReviewResponse, activeTab]);
+
+  const refetchAdminAll = () => {
+    refetchAdminAssigned();
+    if (activeTab === 'Completed') refetchPendingReview();
+  };
+
+  const handleAcceptAdminJob = async (id: string) => {
+    try {
+      await acknowledgeWA(id).unwrap();
+      refetchAdminAll();
+    } catch (err) {
+      console.error('Failed to acknowledge admin assignment:', err);
+    }
+  };
+
+  const handleDeclineAdminJob = async (id: string) => {
+    try {
+      await cancelWA({ id, reason: 'Declined by service provider' }).unwrap();
+      refetchAdminAll();
+    } catch (err) {
+      console.error('Failed to cancel admin assignment:', err);
+    }
+  };
+
+  const handleStartAdminJob = async (id: string) => {
+    try {
+      await startWA(id).unwrap();
+      refetchAdminAll();
+    } catch (err) {
+      console.error('Failed to start admin assignment:', err);
+    }
+  };
+
+  const handleSubmitAdminJob = async (id: string) => {
+    try {
+      await submitWA({ id, data: { summary: 'Work submitted for review' } }).unwrap();
+      refetchAdminAll();
+    } catch (err) {
+      console.error('Failed to submit admin assignment:', err);
+    }
+  };
+
   // Filter orders by status (API already filters, but we ensure consistency)
   const filteredOrders = useMemo(() => {
-    if (!ordersResponse?.data) return [];
-    return ordersResponse.data.filter(
+    const raw = ordersResponse?.data as any;
+    const list: FreightOrder[] = Array.isArray(raw?.orders)
+      ? raw.orders
+      : Array.isArray(raw)
+      ? raw
+      : [];
+    return list.filter(
       (order: FreightOrder) => order.status === statusMap[activeTab]
     );
   }, [ordersResponse?.data, activeTab]);
@@ -179,6 +280,100 @@ const FreightOrders = () => {
           {/* Orders list */}
           {!isLoading && !isError && (
             <div className="space-y-6 px-6 py-6">
+              {adminAssignedJobs.length > 0 && (
+                <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-base font-semibold text-blue-900">
+                      {activeTab === 'Yet to confirm'
+                        ? 'New jobs assigned by Admin'
+                        : `Admin assigned jobs — ${activeTab}`}
+                    </h3>
+                    <span className="rounded-full bg-blue-500 px-3 py-1 text-xs font-medium text-white">
+                      {adminAssignedJobs.length} {activeTab === 'Yet to confirm' ? 'pending' : activeTab.toLowerCase()}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {adminAssignedJobs.map((wa) => (
+                      <div
+                        key={wa._id}
+                        className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-5 w-5 text-blue-500" />
+                            <p className="text-sm font-semibold text-gray-800">
+                              {wa.title || 'Untitled freight assignment'}
+                            </p>
+                            <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-orange-600">
+                              From admin
+                            </span>
+                          </div>
+                          {wa.description && (
+                            <p className="mt-1 text-xs text-gray-500">{wa.description}</p>
+                          )}
+                          <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
+                            {wa.dueDate && (
+                              <span className="inline-flex items-center gap-1">
+                                <Calendar className="h-3.5 w-3.5" />
+                                Due {formatDate(wa.dueDate)}
+                              </span>
+                            )}
+                            {wa.priority && (
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 capitalize">
+                                {wa.priority}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          {activeTab === 'Yet to confirm' && (
+                            <>
+                              <button
+                                onClick={() => handleAcceptAdminJob(wa._id)}
+                                disabled={isAcknowledging}
+                                className="rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600 disabled:opacity-50"
+                              >
+                                Accept
+                              </button>
+                              <button
+                                onClick={() => handleDeclineAdminJob(wa._id)}
+                                disabled={isCancellingWA}
+                                className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                              >
+                                Decline
+                              </button>
+                            </>
+                          )}
+                          {activeTab === 'Upcoming' && (
+                            <button
+                              onClick={() => handleStartAdminJob(wa._id)}
+                              disabled={isStarting}
+                              className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 disabled:opacity-50"
+                            >
+                              Start
+                            </button>
+                          )}
+                          {activeTab === 'Current' && (
+                            <button
+                              onClick={() => handleSubmitAdminJob(wa._id)}
+                              disabled={isSubmittingWA}
+                              className="rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600 disabled:opacity-50"
+                            >
+                              Submit for Review
+                            </button>
+                          )}
+                          {activeTab === 'Completed' && (
+                            <span className="rounded-lg bg-green-100 px-4 py-2 text-sm font-semibold text-green-700">
+                              {wa.status === 'pending_review' ? 'Pending Review' : 'Completed'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {filteredOrders.map((order: FreightOrder) => (
                 <div key={order._id} className="rounded-2xl border border-gray-200 bg-white shadow-sm">
                   <div className="flex flex-col gap-6 p-6 lg:flex-row lg:items-start lg:justify-between">
@@ -287,7 +482,7 @@ const FreightOrders = () => {
               ))}
 
               {/* Empty state */}
-              {filteredOrders.length === 0 && (
+              {filteredOrders.length === 0 && adminAssignedJobs.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-20">
                   <div className="text-gray-400 text-lg mb-2">No {activeTab.toLowerCase()} freight orders</div>
                   <div className="text-sm text-gray-300">Orders will appear here when available</div>
