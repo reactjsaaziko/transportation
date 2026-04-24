@@ -102,26 +102,44 @@ const Dashboard = () => {
     ? location.pathname.replace('/dashboard/', '').split('/')[0]
     : getDefaultMenuForTab(activeTab);
 
+  const resolveTabForMenu = (menu: string): string => {
+    if (chaPrimaryMenuIds.has(menu)) return 'CHA';
+    if (warehouseMenuIds.has(menu)) return 'Warehouse';
+    if (freightMenuIds.has(menu)) return 'Freight Forwarding';
+    if (inspectionMenuIds.has(menu)) return 'Inspection';
+    if (insuranceMenuIds.has(menu)) return 'Insurance';
+    return 'Domestic Transportation';
+  };
+
+  // Shared routes that don't belong to any one service (profile, global helpers).
+  const PUBLIC_MENUS = new Set(['profile']);
+
   useEffect(() => {
-    if (currentMenu) {
-      localStorage.setItem('activeMenu', currentMenu);
-      
-      // Update activeTab based on current menu
-      if (chaPrimaryMenuIds.has(currentMenu)) {
-        setActiveTab('CHA');
-      } else if (warehouseMenuIds.has(currentMenu)) {
-        setActiveTab('Warehouse');
-      } else if (freightMenuIds.has(currentMenu)) {
-        setActiveTab('Freight Forwarding');
-      } else if (inspectionMenuIds.has(currentMenu)) {
-        setActiveTab('Inspection');
-      } else if (insuranceMenuIds.has(currentMenu)) {
-        setActiveTab('Insurance');
-      } else {
-        setActiveTab('Domestic Transportation');
-      }
+    if (!currentMenu) return;
+    localStorage.setItem('activeMenu', currentMenu);
+
+    const tabForMenu = resolveTabForMenu(currentMenu);
+
+    // Enforce allowedServices permission: if the user has a restricted
+    // allowedServices list and the current URL resolves to a tab they don't
+    // have, bounce them to the first service they DO have access to.
+    // Empty allowedServices = admin / legacy user → no restriction.
+    if (
+      allowedServices.length > 0 &&
+      !PUBLIC_MENUS.has(currentMenu) &&
+      !allowedServices.includes(tabForMenu)
+    ) {
+      const fallbackTab = allowedServices.includes('Domestic Transportation')
+        ? 'Domestic Transportation'
+        : allowedServices[0];
+      navigate(`/dashboard/${getDefaultMenuForTab(fallbackTab)}`, {
+        replace: true,
+      });
+      return;
     }
-  }, [currentMenu]);
+
+    setActiveTab(tabForMenu);
+  }, [currentMenu, allowedServices, navigate]);
 
   const handleMenuChange = (menuId: string) => {
     if (menuId !== currentMenu) {
@@ -133,6 +151,23 @@ const Dashboard = () => {
     setActiveTab(tab);
     // Navigate to default menu for the selected tab
     navigate(`/dashboard/${getDefaultMenuForTab(tab)}`, { replace: true });
+  };
+
+  // Gate a route element behind a specific service permission. Admins and
+  // legacy users (empty allowedServices) always pass through; restricted
+  // users get redirected to their first allowed service.
+  const guard = (service: string, element: React.ReactNode) => {
+    if (allowedServices.length === 0) return element;
+    if (allowedServices.includes(service)) return element;
+    const fallbackTab = allowedServices.includes('Domestic Transportation')
+      ? 'Domestic Transportation'
+      : allowedServices[0];
+    return (
+      <Navigate
+        to={`/dashboard/${getDefaultMenuForTab(fallbackTab)}`}
+        replace
+      />
+    );
   };
 
   // If buyer mode is active, show the BuyerDashboard
@@ -174,56 +209,56 @@ const Dashboard = () => {
             {/* Main Content Area - All Routes */}
             <Routes>
               {/* Domestic Transportation Routes */}
-              <Route path="add-vehicle" element={<AddNewVehicle />} />
-              <Route path="manage-vehicle" element={<ManageVehicle />} />
-              <Route path="load-calculator" element={<LoadCalculator />} />
-              <Route path="container-details/:productId" element={<ContainerDetailsPage />} />
-              <Route path="trip" element={<TripManagement />} />
-              <Route path="account" element={<AccountTripsTable />} />
-              <Route path="contact-us" element={<ContactUsCard />} />
-              <Route path="ai-assistant" element={<AiAssistantPanel />} />
-              <Route path="buyer" element={<BuyerPage title="Buyer" />} />
-              <Route path="rail-buyer" element={<RailBuyerPage />} />
-              <Route path="air-buyer" element={<AirBuyerPage />} />
-              <Route path="water-buyer" element={<WaterBuyerPage />} />
-              <Route path="order-submission" element={<OrderSubmission />} />
-              <Route path="insurance-selection" element={<InsuranceSelection />} />
-              <Route path="quote-comparison" element={<QuoteComparison />} />
+              <Route path="add-vehicle" element={guard('Domestic Transportation', <AddNewVehicle />)} />
+              <Route path="manage-vehicle" element={guard('Domestic Transportation', <ManageVehicle />)} />
+              <Route path="load-calculator" element={guard('Domestic Transportation', <LoadCalculator />)} />
+              <Route path="container-details/:productId" element={guard('Domestic Transportation', <ContainerDetailsPage />)} />
+              <Route path="trip" element={guard('Domestic Transportation', <TripManagement />)} />
+              <Route path="account" element={guard('Domestic Transportation', <AccountTripsTable />)} />
+              <Route path="contact-us" element={guard('Domestic Transportation', <ContactUsCard />)} />
+              <Route path="ai-assistant" element={guard('Domestic Transportation', <AiAssistantPanel />)} />
+              <Route path="buyer" element={guard('Domestic Transportation', <BuyerPage title="Buyer" />)} />
+              <Route path="rail-buyer" element={guard('Domestic Transportation', <RailBuyerPage />)} />
+              <Route path="air-buyer" element={guard('Domestic Transportation', <AirBuyerPage />)} />
+              <Route path="water-buyer" element={guard('Domestic Transportation', <WaterBuyerPage />)} />
+              <Route path="order-submission" element={guard('Domestic Transportation', <OrderSubmission />)} />
+              <Route path="insurance-selection" element={guard('Domestic Transportation', <InsuranceSelection />)} />
+              <Route path="quote-comparison" element={guard('Domestic Transportation', <QuoteComparison />)} />
 
               {/* CHA Routes */}
-              <Route path="service" element={<CHAForm />} />
-              <Route path="order" element={<CHAOrders />} />
+              <Route path="service" element={guard('CHA', <CHAForm />)} />
+              <Route path="order" element={guard('CHA', <CHAOrders />)} />
 
               {/* Warehouse Routes */}
-              <Route path="manage-warehouse" element={<WarehouseList />} />
-              <Route path="warehouse-account" element={<WarehouseAccountTable />} />
-              <Route path="warehouse-order" element={<WarehouseOrders />} />
-              <Route path="warehouse-buyer" element={<BuyerPage title="Warehouse buyer" />} />
-              <Route path="warehouse-contact-us" element={<WarehouseContact />} />
-              <Route path="warehouse-ai-assistant" element={<AiAssistantPanel />} />
+              <Route path="manage-warehouse" element={guard('Warehouse', <WarehouseList />)} />
+              <Route path="warehouse-account" element={guard('Warehouse', <WarehouseAccountTable />)} />
+              <Route path="warehouse-order" element={guard('Warehouse', <WarehouseOrders />)} />
+              <Route path="warehouse-buyer" element={guard('Warehouse', <BuyerPage title="Warehouse buyer" />)} />
+              <Route path="warehouse-contact-us" element={guard('Warehouse', <WarehouseContact />)} />
+              <Route path="warehouse-ai-assistant" element={guard('Warehouse', <AiAssistantPanel />)} />
 
               {/* Freight Forwarding Routes */}
-              <Route path="freight-service" element={<FreightServiceForm />} />
-              <Route path="freight-order" element={<FreightOrders />} />
-              <Route path="freight-order/:orderId" element={<FreightOrderDetails />} />
-              <Route path="freight-buyer" element={<BuyerPage title="Freight buyer" />} />
-              <Route path="freight-contact" element={<FreightContact />} />
-              <Route path="freight-ai" element={<AiAssistantPanel />} />
+              <Route path="freight-service" element={guard('Freight Forwarding', <FreightServiceForm />)} />
+              <Route path="freight-order" element={guard('Freight Forwarding', <FreightOrders />)} />
+              <Route path="freight-order/:orderId" element={guard('Freight Forwarding', <FreightOrderDetails />)} />
+              <Route path="freight-buyer" element={guard('Freight Forwarding', <BuyerPage title="Freight buyer" />)} />
+              <Route path="freight-contact" element={guard('Freight Forwarding', <FreightContact />)} />
+              <Route path="freight-ai" element={guard('Freight Forwarding', <AiAssistantPanel />)} />
 
               {/* Inspection Routes */}
-              <Route path="inspection-service" element={<InspectionResults />} />
-              <Route path="inspection-service/form" element={<InspectionForm />} />
-              <Route path="inspection-order" element={<InspectionOrders />} />
-              <Route path="inspection-order/:orderId" element={<InspectionOrderDetails />} />
-              <Route path="inspection-buyer" element={<BuyerPage title="Inspection buyer" />} />
-              <Route path="inspection-contact" element={<InspectionContact />} />
-              <Route path="inspection-ai" element={<AiAssistantPanel />} />
+              <Route path="inspection-service" element={guard('Inspection', <InspectionResults />)} />
+              <Route path="inspection-service/form" element={guard('Inspection', <InspectionForm />)} />
+              <Route path="inspection-order" element={guard('Inspection', <InspectionOrders />)} />
+              <Route path="inspection-order/:orderId" element={guard('Inspection', <InspectionOrderDetails />)} />
+              <Route path="inspection-buyer" element={guard('Inspection', <BuyerPage title="Inspection buyer" />)} />
+              <Route path="inspection-contact" element={guard('Inspection', <InspectionContact />)} />
+              <Route path="inspection-ai" element={guard('Inspection', <AiAssistantPanel />)} />
 
               {/* Insurance Routes */}
-              <Route path="insurance-service" element={<InsuranceSelection />} />
-              <Route path="insurance-order" element={<OrderSubmission />} />
-              <Route path="insurance-contact" element={<ContactUsCard />} />
-              <Route path="insurance-ai" element={<AiAssistantPanel />} />
+              <Route path="insurance-service" element={guard('Insurance', <InsuranceSelection />)} />
+              <Route path="insurance-order" element={guard('Insurance', <OrderSubmission />)} />
+              <Route path="insurance-contact" element={guard('Insurance', <ContactUsCard />)} />
+              <Route path="insurance-ai" element={guard('Insurance', <AiAssistantPanel />)} />
 
               {/* Profile Route (without submit button) */}
               <Route path="profile" element={<ProfileForm />} />

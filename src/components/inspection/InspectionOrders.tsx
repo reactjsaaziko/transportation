@@ -3,7 +3,7 @@ import { Calendar, X } from 'lucide-react';
 import {
   useGetMyWorkAssignmentsQuery,
   useAcknowledgeWorkAssignmentMutation,
-  useCancelWorkAssignmentMutation,
+  useDeclineWorkAssignmentMutation,
   useStartWorkAssignmentMutation,
   useSubmitWorkAssignmentForReviewMutation,
 } from '@/services/workAssignmentApi';
@@ -72,8 +72,8 @@ const InspectionOrders = () => {
 
   const [acknowledgeWA, { isLoading: isAcknowledging }] =
     useAcknowledgeWorkAssignmentMutation();
-  const [cancelWA, { isLoading: isCancellingWA }] =
-    useCancelWorkAssignmentMutation();
+  const [declineWA, { isLoading: isCancellingWA }] =
+    useDeclineWorkAssignmentMutation();
   const [startWA, { isLoading: isStarting }] = useStartWorkAssignmentMutation();
   const [submitWA, { isLoading: isSubmitting }] =
     useSubmitWorkAssignmentForReviewMutation();
@@ -106,7 +106,7 @@ const InspectionOrders = () => {
 
   const handleDecline = async (id: string) => {
     try {
-      await cancelWA({ id, reason: 'Declined by service provider' }).unwrap();
+      await declineWA({ id, reason: 'Declined by service provider' }).unwrap();
       refetchAll();
     } catch (err) {
       console.error('Failed to cancel assignment:', err);

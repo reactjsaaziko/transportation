@@ -9,7 +9,7 @@ import {
 import {
   useGetMyWorkAssignmentsQuery,
   useAcknowledgeWorkAssignmentMutation,
-  useCancelWorkAssignmentMutation,
+  useDeclineWorkAssignmentMutation,
   useStartWorkAssignmentMutation,
   useSubmitWorkAssignmentForReviewMutation,
 } from '@/services/workAssignmentApi';
@@ -122,8 +122,8 @@ const CHAOrders = () => {
 
   const [acknowledgeWA, { isLoading: isAcknowledging }] =
     useAcknowledgeWorkAssignmentMutation();
-  const [cancelWA, { isLoading: isCancellingWA }] =
-    useCancelWorkAssignmentMutation();
+  const [declineWA, { isLoading: isCancellingWA }] =
+    useDeclineWorkAssignmentMutation();
   const [startWA, { isLoading: isStarting }] =
     useStartWorkAssignmentMutation();
   const [submitWA, { isLoading: isSubmittingWA }] =
@@ -163,7 +163,7 @@ const CHAOrders = () => {
 
   const handleDeclineAdminJob = async (id: string) => {
     try {
-      await cancelWA({ id, reason: 'Declined by service provider' }).unwrap();
+      await declineWA({ id, reason: 'Declined by service provider' }).unwrap();
       refetchAdminAll();
     } catch (err) {
       console.error('Failed to cancel admin assignment:', err);
