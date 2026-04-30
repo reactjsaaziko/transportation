@@ -1,41 +1,17 @@
 import { useState } from 'react';
 import type { CargoFormSubmission } from './CargoDesignModal';
 
-interface DrumCargoFormProps {
+interface RollCargoFormProps {
   onClose: () => void;
   onAdd?: (data: CargoFormSubmission) => void;
   initialData?: CargoFormSubmission;
 }
 
-// Vertical cylinder/barrel shape — used in section 2 and as before-image in section 3
-const VerticalCylinder = ({
-  width = 90,
-  height = 130,
-  active = true,
-}: {
-  width?: number;
-  height?: number;
-  active?: boolean;
-}) => {
-  const stroke = active ? '#7BA5F3' : '#9CA3AF';
-  const fill = active ? '#DBEAFE' : '#F3F4F6';
-  const top = active ? '#BFDBFE' : '#E5E7EB';
-  return (
-    <svg viewBox="0 0 90 130" style={{ width, height }}>
-      {/* Side body (rectangle between top + bottom ellipses) */}
-      <path d="M10 18 L10 112 Q10 124 45 124 Q80 124 80 112 L80 18 Z" fill={fill} stroke={stroke} strokeWidth="1.4" />
-      {/* Bottom ellipse (back half — visible behind front curve) */}
-      <ellipse cx="45" cy="112" rx="35" ry="11" fill="none" stroke={stroke} strokeWidth="0.8" strokeDasharray="3 3" opacity="0.5" />
-      {/* Top ellipse */}
-      <ellipse cx="45" cy="18" rx="35" ry="11" fill={top} stroke={stroke} strokeWidth="1.4" />
-    </svg>
-  );
-};
-
-// Horizontal cylinder (barrel lying on its side) — used as after-image in section 3
-const HorizontalCylinder = ({
+// Horizontal cylinder/roll lying on its side — used in section 2 and as the
+// "before" image in section 3 (rolls sit horizontally by default).
+const HorizontalRoll = ({
   width = 130,
-  height = 90,
+  height = 80,
   active = true,
 }: {
   width?: number;
@@ -43,69 +19,90 @@ const HorizontalCylinder = ({
   active?: boolean;
 }) => {
   const stroke = active ? '#7BA5F3' : '#9CA3AF';
-  const fill = active ? '#DBEAFE' : '#F3F4F6';
+  const body = active ? '#DBEAFE' : '#F3F4F6';
   const cap = active ? '#BFDBFE' : '#E5E7EB';
   return (
-    <svg viewBox="0 0 130 90" style={{ width, height }}>
-      {/* Body (rectangle between left + right ellipses) */}
-      <path d="M18 10 L112 10 Q124 10 124 45 Q124 80 112 80 L18 80 Q6 80 6 45 Q6 10 18 10 Z" fill={fill} stroke={stroke} strokeWidth="1.4" />
-      {/* Right end cap (back ellipse) */}
-      <ellipse cx="112" cy="45" rx="11" ry="35" fill={cap} stroke={stroke} strokeWidth="1.4" />
-      {/* Left end cap (front face — visible) */}
-      <ellipse cx="18" cy="45" rx="11" ry="35" fill={cap} stroke={stroke} strokeWidth="1.4" />
-      <ellipse cx="18" cy="45" rx="5" ry="18" fill="none" stroke={stroke} strokeWidth="0.8" opacity="0.5" />
+    <svg viewBox="0 0 130 80" style={{ width, height }}>
+      {/* Body — rectangle between the two end caps */}
+      <path d="M16 12 L102 12 L102 68 L16 68 Z" fill={body} stroke={stroke} strokeWidth="1.4" />
+      {/* Right end cap (back) */}
+      <ellipse cx="102" cy="40" rx="10" ry="28" fill={cap} stroke={stroke} strokeWidth="1.4" />
+      {/* Left end cap (front face — shows the visible circle opening) */}
+      <ellipse cx="16" cy="40" rx="10" ry="28" fill={cap} stroke={stroke} strokeWidth="1.4" />
+      <ellipse cx="16" cy="40" rx="4" ry="14" fill="none" stroke={stroke} strokeWidth="0.8" opacity="0.5" />
     </svg>
   );
 };
 
-// Stacked cylinders icon for section 4 — 4 cylinders stacked vertically
-// Variants: 'plain' shows numbers 1-4, 'mass' adds Kg bag, 'height' adds ruler
-const StackedCylindersIcon = ({ variant = 'plain' }: { variant?: 'plain' | 'mass' | 'height' }) => {
+// Vertical cylinder/roll standing on its end — "after" image in section 3 (when tilted).
+const VerticalRoll = ({
+  width = 70,
+  height = 110,
+  active = true,
+}: {
+  width?: number;
+  height?: number;
+  active?: boolean;
+}) => {
+  const stroke = active ? '#7BA5F3' : '#9CA3AF';
+  const body = active ? '#DBEAFE' : '#F3F4F6';
+  const top = active ? '#BFDBFE' : '#E5E7EB';
+  return (
+    <svg viewBox="0 0 70 110" style={{ width, height }}>
+      <path d="M10 18 L10 92 Q10 102 35 102 Q60 102 60 92 L60 18 Z" fill={body} stroke={stroke} strokeWidth="1.4" />
+      <ellipse cx="35" cy="92" rx="25" ry="9" fill="none" stroke={stroke} strokeWidth="0.8" strokeDasharray="3 3" opacity="0.5" />
+      <ellipse cx="35" cy="18" rx="25" ry="9" fill={top} stroke={stroke} strokeWidth="1.4" />
+    </svg>
+  );
+};
+
+// A pile of horizontal rolls (logs) — bottom row of 3, top row of 2 nestled in
+// between. Used in section 4 stuffing illustrations.
+const StackedRollsIcon = ({ variant = 'plain' }: { variant?: 'plain' | 'mass' | 'height' }) => {
   const stroke = '#7BA5F3';
-  const top = '#BFDBFE';
   const body = '#DBEAFE';
+  const cap = '#BFDBFE';
   const labelColor = '#3B82F6';
 
-  // One thin cylinder slab, vertical center y
-  const Slab = ({ y, num }: { y: number; num?: number }) => (
+  // Single small horizontal roll at center (cx, cy)
+  const Roll = ({ cx, cy }: { cx: number; cy: number }) => (
     <g>
-      {/* Body */}
-      <path d={`M22 ${y - 4} L22 ${y + 6} Q22 ${y + 9} 50 ${y + 9} Q78 ${y + 9} 78 ${y + 6} L78 ${y - 4} Z`} fill={body} stroke={stroke} strokeWidth="1" />
-      {/* Top ellipse */}
-      <ellipse cx={50} cy={y - 4} rx={28} ry={5} fill={top} stroke={stroke} strokeWidth="1" />
-      {num !== undefined && (
-        <text x="64" y={y + 4} fill={labelColor} fontSize="7" fontWeight="700">
-          {num}
-        </text>
-      )}
+      <path d={`M${cx - 16} ${cy - 9} L${cx + 16} ${cy - 9} L${cx + 16} ${cy + 9} L${cx - 16} ${cy + 9} Z`} fill={body} stroke={stroke} strokeWidth="0.9" />
+      <ellipse cx={cx + 16} cy={cy} rx="4" ry="9" fill={cap} stroke={stroke} strokeWidth="0.9" />
+      <ellipse cx={cx - 16} cy={cy} rx="4" ry="9" fill={cap} stroke={stroke} strokeWidth="0.9" />
+      <ellipse cx={cx - 16} cy={cy} rx="1.6" ry="4.5" fill="none" stroke={stroke} strokeWidth="0.7" opacity="0.55" />
     </g>
   );
 
   return (
     <svg viewBox="0 0 100 100" className="h-20 w-20 flex-shrink-0">
-      {/* 4 stacked slabs (drawn back-to-front so top stays on top) */}
-      <Slab y={88} num={variant === 'plain' ? 1 : undefined} />
-      <Slab y={70} num={variant === 'plain' ? 2 : undefined} />
-      <Slab y={52} num={variant === 'plain' ? 3 : undefined} />
-      <Slab y={34} num={variant === 'plain' ? 4 : undefined} />
+      {/* Bottom row — 3 rolls side-by-side */}
+      <Roll cx={28} cy={70} />
+      <Roll cx={50} cy={70} />
+      <Roll cx={72} cy={70} />
+      {/* Middle row — 2 rolls nestled between */}
+      <Roll cx={39} cy={52} />
+      <Roll cx={61} cy={52} />
+      {/* Top row — 1 roll on top */}
+      <Roll cx={50} cy={34} />
 
-      {/* Mass: Kg bag attached above the stack */}
+      {/* Mass: Kg bag attached above the pile */}
       {variant === 'mass' && (
         <g>
-          <rect x="38" y="0" width="24" height="20" rx="2" fill="white" stroke={stroke} strokeWidth="1.2" />
-          <path d="M42 0 C42 -6, 58 -6, 58 0" fill="none" stroke={stroke} strokeWidth="1" strokeLinecap="round" />
-          <text x="50" y="14" fill={labelColor} fontSize="9" fontWeight="700" textAnchor="middle">Kg</text>
+          <rect x="38" y="2" width="24" height="20" rx="2" fill="white" stroke={stroke} strokeWidth="1.2" />
+          <path d="M42 2 C42 -4, 58 -4, 58 2" fill="none" stroke={stroke} strokeWidth="1" strokeLinecap="round" />
+          <text x="50" y="16" fill={labelColor} fontSize="9" fontWeight="700" textAnchor="middle">Kg</text>
         </g>
       )}
 
-      {/* Height: vertical ruler with arrowheads + ticks */}
+      {/* Height: vertical ruler on the left */}
       {variant === 'height' && (
         <g>
-          <line x1="6" y1="14" x2="6" y2="92" stroke={stroke} strokeWidth="1" />
-          <path d="M3 17 L6 14 L9 17" fill="none" stroke={stroke} strokeWidth="1" strokeLinecap="round" />
-          <path d="M3 89 L6 92 L9 89" fill="none" stroke={stroke} strokeWidth="1" strokeLinecap="round" />
-          <line x1="4" y1="32" x2="8" y2="32" stroke={stroke} strokeWidth="1" />
-          <line x1="4" y1="50" x2="8" y2="50" stroke={stroke} strokeWidth="1" />
+          <line x1="6" y1="20" x2="6" y2="84" stroke={stroke} strokeWidth="1" />
+          <path d="M3 23 L6 20 L9 23" fill="none" stroke={stroke} strokeWidth="1" strokeLinecap="round" />
+          <path d="M3 81 L6 84 L9 81" fill="none" stroke={stroke} strokeWidth="1" strokeLinecap="round" />
+          <line x1="4" y1="36" x2="8" y2="36" stroke={stroke} strokeWidth="1" />
+          <line x1="4" y1="52" x2="8" y2="52" stroke={stroke} strokeWidth="1" />
           <line x1="4" y1="68" x2="8" y2="68" stroke={stroke} strokeWidth="1" />
         </g>
       )}
@@ -113,13 +110,12 @@ const StackedCylindersIcon = ({ variant = 'plain' }: { variant?: 'plain' | 'mass
   );
 };
 
-// Roll-placement icons: square grid vs hexagonal grid of cylinder tops
+// Roll-placement icons (top-down view): square grid vs hexagonal grid
 const PlacementIcon = ({ pattern, active }: { pattern: 'square' | 'hexagon'; active: boolean }) => {
   const stroke = active ? '#7BA5F3' : '#9CA3AF';
   const fill = active ? '#DBEAFE' : '#F3F4F6';
   const top = active ? '#BFDBFE' : '#E5E7EB';
 
-  // Single short cylinder top-down view (top ellipse + small body)
   const Mini = ({ cx, cy }: { cx: number; cy: number }) => (
     <g>
       <path d={`M${cx - 11} ${cy - 8} L${cx - 11} ${cy + 4} Q${cx - 11} ${cy + 8} ${cx} ${cy + 8} Q${cx + 11} ${cy + 8} ${cx + 11} ${cy + 4} L${cx + 11} ${cy - 8} Z`} fill={fill} stroke={stroke} strokeWidth="1" />
@@ -128,7 +124,6 @@ const PlacementIcon = ({ pattern, active }: { pattern: 'square' | 'hexagon'; act
   );
 
   if (pattern === 'square') {
-    // 3 columns × 2 rows of cylinders aligned in a grid
     const cols = [16, 40, 64];
     const rows = [16, 40];
     return (
@@ -137,7 +132,6 @@ const PlacementIcon = ({ pattern, active }: { pattern: 'square' | 'hexagon'; act
       </svg>
     );
   }
-  // Hexagonal: rows offset by half-cylinder width
   const rows = [
     { y: 14, xs: [14, 36, 58] },
     { y: 30, xs: [25, 47, 69] },
@@ -150,15 +144,16 @@ const PlacementIcon = ({ pattern, active }: { pattern: 'square' | 'hexagon'; act
   );
 };
 
-const DrumCargoForm = ({ onClose, onAdd, initialData }: DrumCargoFormProps) => {
+const RollCargoForm = ({ onClose, onAdd, initialData }: RollCargoFormProps) => {
   const isEdit = !!initialData;
+  // For rolls the serialiser writes: length=cylinder length (form.height),
+  // width=diameter, height=diameter. So when prefilling we map back:
+  // diameter = initialData.width (or .height); cylinder length = .length.
   const [form, setForm] = useState({
     productName: initialData?.productName ?? 'new product',
     colour: initialData?.colour ?? '#c93c8a',
-    // Cylindrical types store the diameter in the generic `length` field
-    // when serialised (length === width === diameter).
-    diameter: initialData?.length ?? '100',
-    height: initialData?.height ?? '100',
+    diameter: initialData?.width ?? '100',
+    height: initialData?.length ?? '100',
     weight: initialData?.weight ?? '1',
     quantity: initialData?.quantity ?? '1',
   });
@@ -211,18 +206,17 @@ const DrumCargoForm = ({ onClose, onAdd, initialData }: DrumCargoFormProps) => {
   };
 
   const handleAdd = () => {
-    // Map cylinder dimensions → generic submission (length & width = diameter)
     onAdd?.({
-      type: 'barrels',
+      type: 'roll',
       productName: form.productName,
       colour: form.colour,
-      length: form.diameter,
+      length: form.height,    // For a horizontal roll, "Height" in the form is the cylinder's length
       width: form.diameter,
-      height: form.height,
+      height: form.diameter,  // Both cross-section dimensions = diameter
       weight: form.weight,
       quantity: form.quantity,
       spacingSettings: {
-        // Drums tilt only on the long axis; map the single toggle to tiltToLength.
+        // Rolls tilt along the length (cylinder axis); map the single toggle.
         tiltToLength: tiltEnabled,
       },
       stuffingSettings: {
@@ -250,26 +244,27 @@ const DrumCargoForm = ({ onClose, onAdd, initialData }: DrumCargoFormProps) => {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[200px_1fr]">
-          {/* Vertical cylinder illustration with Radius + Height labels */}
+          {/* Horizontal roll illustration with Height (top) + Radius (right) labels */}
           <div className="flex items-center justify-center">
-            <svg viewBox="0 0 200 220" className="h-48 w-48">
-              {/* Cylinder body */}
-              <path d="M55 50 L55 170 Q55 184 100 184 Q145 184 145 170 L145 50 Z" fill="#DBEAFE" stroke="#7BA5F3" strokeWidth="1.5" />
-              {/* Bottom ellipse (dashed back-half) */}
-              <ellipse cx="100" cy="170" rx="45" ry="14" fill="none" stroke="#7BA5F3" strokeWidth="0.9" strokeDasharray="4 3" opacity="0.5" />
-              {/* Top ellipse */}
-              <ellipse cx="100" cy="50" rx="45" ry="14" fill="#BFDBFE" stroke="#7BA5F3" strokeWidth="1.5" />
+            <svg viewBox="0 0 240 200" className="h-44 w-48">
+              {/* Roll body */}
+              <path d="M40 60 L160 60 L160 140 L40 140 Z" fill="#DBEAFE" stroke="#7BA5F3" strokeWidth="1.5" />
+              {/* Right end cap */}
+              <ellipse cx="160" cy="100" rx="14" ry="40" fill="#BFDBFE" stroke="#7BA5F3" strokeWidth="1.5" />
+              {/* Left end cap (front circle) */}
+              <ellipse cx="40" cy="100" rx="14" ry="40" fill="#BFDBFE" stroke="#7BA5F3" strokeWidth="1.5" />
+              <ellipse cx="40" cy="100" rx="6" ry="20" fill="none" stroke="#7BA5F3" strokeWidth="0.9" opacity="0.5" />
 
-              {/* Radius label — line from center to edge of top ellipse */}
-              <line x1="100" y1="50" x2="142" y2="48" stroke="#7BA5F3" strokeWidth="1" />
-              <circle cx="100" cy="50" r="2" fill="#7BA5F3" />
-              <text x="150" y="42" fill="#6B7280" fontSize="11" fontWeight="500">Radius</text>
+              {/* Height bracket on top (showing the roll's length) */}
+              <line x1="40" y1="40" x2="160" y2="40" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="3 3" />
+              <line x1="40" y1="40" x2="40" y2="60" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+              <line x1="160" y1="40" x2="160" y2="60" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+              <text x="100" y="32" fill="#6B7280" fontSize="11" fontWeight="500" textAnchor="middle">Height</text>
 
-              {/* Height bracket on the left */}
-              <line x1="36" y1="50" x2="36" y2="170" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="3 3" />
-              <line x1="36" y1="50"  x2="55" y2="50"  stroke="#9CA3AF" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
-              <line x1="36" y1="170" x2="55" y2="170" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
-              <text x="22" y="115" fill="#6B7280" fontSize="11" fontWeight="500" textAnchor="end">Height</text>
+              {/* Radius label — pointing to right end cap */}
+              <line x1="160" y1="100" x2="180" y2="100" stroke="#7BA5F3" strokeWidth="1" />
+              <circle cx="160" cy="100" r="2" fill="#7BA5F3" />
+              <text x="186" y="104" fill="#6B7280" fontSize="11" fontWeight="500">Radius</text>
             </svg>
           </div>
 
@@ -304,7 +299,6 @@ const DrumCargoForm = ({ onClose, onAdd, initialData }: DrumCargoFormProps) => {
               </label>
             </div>
 
-            {/* Diameter + Height (cylinder uses 2 dims, not 3) */}
             <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-2">
                 <span className="text-xs font-medium text-gray-500">Diameter</span>
@@ -382,7 +376,7 @@ const DrumCargoForm = ({ onClose, onAdd, initialData }: DrumCargoFormProps) => {
             <span className="text-gray-400">?</span>
           </div>
 
-          {/* Tilt option */}
+          {/* Tilt: horizontal → vertical (rolls default to horizontal, tilt stands them up) */}
           <div className="mb-5 space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
               <input
@@ -394,7 +388,7 @@ const DrumCargoForm = ({ onClose, onAdd, initialData }: DrumCargoFormProps) => {
               Tilt
             </label>
             <div className="flex items-center gap-3 pl-6">
-              <VerticalCylinder width={50} height={72} active={tiltEnabled} />
+              <HorizontalRoll width={72} height={44} active={tiltEnabled} />
               <svg viewBox="0 0 24 24" className="h-5 w-5 flex-shrink-0">
                 <path
                   d="M6 12 L18 12 M15 9 L18 12 L15 15"
@@ -404,11 +398,11 @@ const DrumCargoForm = ({ onClose, onAdd, initialData }: DrumCargoFormProps) => {
                   strokeLinecap="round"
                 />
               </svg>
-              <HorizontalCylinder width={72} height={50} active={tiltEnabled} />
+              <VerticalRoll width={42} height={64} active={tiltEnabled} />
             </div>
           </div>
 
-          {/* Roll Placement option */}
+          {/* Roll Placement */}
           <div className="space-y-3">
             <span className="text-sm font-medium text-gray-600">Roll Placement</span>
             <div className="flex items-center gap-6">
@@ -450,7 +444,7 @@ const DrumCargoForm = ({ onClose, onAdd, initialData }: DrumCargoFormProps) => {
           <div className="grid grid-cols-2 gap-x-5 gap-y-5">
             {/* Layers Count */}
             <div className="flex items-center gap-3">
-              <StackedCylindersIcon variant="plain" />
+              <StackedRollsIcon variant="plain" />
               <div className="flex-1 space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
                   <input
@@ -476,7 +470,7 @@ const DrumCargoForm = ({ onClose, onAdd, initialData }: DrumCargoFormProps) => {
 
             {/* Mass */}
             <div className="flex items-center gap-3">
-              <StackedCylindersIcon variant="mass" />
+              <StackedRollsIcon variant="mass" />
               <div className="flex-1 space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
                   <input
@@ -503,7 +497,7 @@ const DrumCargoForm = ({ onClose, onAdd, initialData }: DrumCargoFormProps) => {
 
             {/* Height */}
             <div className="flex items-center gap-3">
-              <StackedCylindersIcon variant="height" />
+              <StackedRollsIcon variant="height" />
               <div className="flex-1 space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
                   <input
@@ -566,4 +560,4 @@ const DrumCargoForm = ({ onClose, onAdd, initialData }: DrumCargoFormProps) => {
   );
 };
 
-export default DrumCargoForm;
+export default RollCargoForm;

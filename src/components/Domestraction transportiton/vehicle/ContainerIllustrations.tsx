@@ -69,7 +69,7 @@ export const ContainerIllustration: React.FC<ContainerIllustrationProps> = ({ va
         const offset = x + 8 + index * ((width - 16) / 6);
         return (
           <line
-            // eslint-disable-next-line react/no-array-index-key
+             
             key={index}
             x1={offset}
             y1={y + 3}
@@ -87,7 +87,7 @@ export const ContainerIllustration: React.FC<ContainerIllustrationProps> = ({ va
             const start = x + 12 + index * ((width - 24) / 2);
             return (
               <line
-                // eslint-disable-next-line react/no-array-index-key
+                 
                 key={`bar-${index}`}
                 x1={start}
                 y1={y - 4}
@@ -132,7 +132,7 @@ export const ContainerIllustration: React.FC<ContainerIllustrationProps> = ({ va
             const startX = x + 8 + index * (hatchWidth + 6);
             return (
               <rect
-                // eslint-disable-next-line react/no-array-index-key
+                 
                 key={`hatch-${index}`}
                 x={startX}
                 y={y - depth + 2}
@@ -211,7 +211,7 @@ export const ContainerIllustration: React.FC<ContainerIllustrationProps> = ({ va
           const start = x + 10 + index * ((width - 20) / 3);
           return (
             <line
-              // eslint-disable-next-line react/no-array-index-key
+               
               key={index}
               x1={start}
               y1={y + 30}
@@ -458,7 +458,7 @@ export const TruckIllustration: React.FC<{ variant: TruckVariant }> = ({ variant
           <rect x="96" y="68" width="122" height="12" fill={palette.trailerShadow} opacity="0.55" />
           {Array.from({ length: 5 }).map((_, index) => (
             <line
-              // eslint-disable-next-line react/no-array-index-key
+               
               key={index}
               x1={108 + index * 22}
               y1="42"

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router';
 import { getAllowedServices } from '../../services/authApi';
 import Header from '../../components/dashboard/Header';
 import Sidebar from '../../components/dashboard/Sidebar';
@@ -38,6 +38,12 @@ import OrderSubmission from '../../components/order/OrderSubmission';
 import InsuranceSelection from '../../components/order/InsuranceSelection';
 import QuoteComparison from '../../components/order/QuoteComparison';
 import { useBuyer } from '../../context/BuyerContext';
+
+const ContainerDetailsRoute = () => {
+  const { productId } = useParams<{ productId: string }>();
+  const navigate = useNavigate();
+  return <ContainerDetailsPage containerId={productId ?? null} onBack={() => navigate(-1)} />;
+};
 
 const warehouseMenuIds = new Set([
   'manage-warehouse',
@@ -212,7 +218,7 @@ const Dashboard = () => {
               <Route path="add-vehicle" element={guard('Domestic Transportation', <AddNewVehicle />)} />
               <Route path="manage-vehicle" element={guard('Domestic Transportation', <ManageVehicle />)} />
               <Route path="load-calculator" element={guard('Domestic Transportation', <LoadCalculator />)} />
-              <Route path="container-details/:productId" element={guard('Domestic Transportation', <ContainerDetailsPage />)} />
+              <Route path="container-details/:productId" element={guard('Domestic Transportation', <ContainerDetailsRoute />)} />
               <Route path="trip" element={guard('Domestic Transportation', <TripManagement />)} />
               <Route path="account" element={guard('Domestic Transportation', <AccountTripsTable />)} />
               <Route path="contact-us" element={guard('Domestic Transportation', <ContactUsCard />)} />

@@ -1,159 +1,490 @@
 import { useState } from 'react';
+import type { CargoFormSubmission } from './CargoDesignModal';
 
 interface SackCargoFormProps {
   onClose: () => void;
+  onAdd?: (data: CargoFormSubmission) => void;
+  initialData?: CargoFormSubmission;
 }
 
-const SackCargoForm = ({ onClose }: SackCargoFormProps) => {
+// Color palette for all pillow illustrations
+const usePillowColors = (active: boolean) => ({
+  stroke: active ? '#7BA5F3' : '#9CA3AF',
+  top: active ? '#DBEAFE' : '#F3F4F6',
+  right: active ? '#A7C7FB' : '#E5E7EB',
+  left: active ? '#93C5FD' : '#D1D5DB',
+  cubeStroke: '#9CA3AF',
+});
+
+/* ════════════════════════════════════════════════════════════════
+   Each Pillow*** below draws a complete isometric scene:
+     1. dashed bounding cube
+     2. left depth-band (darker)
+     3. right depth-band (medium)
+     4. top puffy face (lightest, on top)
+   The three faces use distinct fills so the 3D shape reads clearly
+   even at 84×84 px. Layout/proportion mirrors the SeaRates reference.
+   ════════════════════════════════════════════════════════════════ */
+
+// ─── Pillow Geometry — Soft Cushion Silhouette ────────────────────────
+// To produce the SeaRates "soft pillow" look, the top-face path uses cubic
+// bezier control points that pull TOWARD the cube's center. This makes each
+// edge between two corners curve INWARD (concave), which in turn makes the
+// 4 corners stick out as bulgy puffs — the classic cushion silhouette.
+//
+// Compare:
+//   Control points NEAR the corners → near-straight edges → DIAMOND/BOX look
+//   Control points TOWARD the center → concave edges → PUFFY PILLOW look ✓
+
+// PillowFlat — soft cushion drawn as ONE silhouette path with light fill,
+// plus internal "fold" lines showing the 3D depth (top face's bottom edges).
+// Subtle concavity — corners visibly bulge but the shape doesn't pinch.
+const PillowFlat = ({ size = 84, active = true }: { size?: number; active?: boolean }) => {
+  const c = usePillowColors(active);
+  // Cube top corners:    top(110,30) right(186,62) front(110,94) left(34,62)
+  // Cube bottom corners: top(110,80) right(186,112) front(110,144) left(34,112)
+  return (
+    <svg viewBox="0 0 220 180" style={{ width: size, height: size }}>
+      {/* Faint dashed bounding cube (light, doesn't dominate) */}
+      <g opacity="0.4">
+        <path d="M110 30 L186 62 L110 94 L34 62 Z" fill="none" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <path d="M110 80 L186 112 L110 144 L34 112 Z" fill="none" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="110" y1="30" x2="110" y2="80"  stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="186" y1="62" x2="186" y2="112" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="110" y1="94" x2="110" y2="144" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="34"  y1="62" x2="34"  y2="112" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+      </g>
+
+      {/* DEPTH SHADING — front-left & front-right bands (semi-transparent
+          darker fills below the top face for 3D depth). No strokes, blends. */}
+      <path d="M 110 94 C 97 86 70 75 34 62 C 30 76 30 99 34 112 C 70 118 97 129 110 144 Z"
+        fill={c.left} opacity="0.85" />
+      <path d="M 110 94 C 123 86 150 75 186 62 C 190 76 190 99 186 112 C 150 118 123 129 110 144 Z"
+        fill={c.right} opacity="0.85" />
+
+      {/* TOP face — light fill. Subtle concave edges (15% pull, not dramatic).
+          Control points sit 25/75% along each straight edge then nudge 15%
+          toward center — gives a clearly soft cushion, not a pinched UFO. */}
+      <path d="
+        M 110 30
+        C 126 42, 158 55, 186 62
+        C 158 69, 126 82, 110 94
+        C 94 82, 62 69, 34 62
+        C 62 55, 94 42, 110 30
+        Z
+      " fill={c.top} stroke={c.stroke} strokeWidth="1.4" strokeLinejoin="round" />
+
+      {/* OUTER silhouette — the puffy bottom half of the pillow. Sides bulge
+          outward subtly. Drawn after fills so its stroke is on top. */}
+      <path d="
+        M 186 62
+        C 188 76 188 99 186 112
+        C 150 118 123 129 110 144
+        C 97 129 70 118 34 112
+        C 32 99 32 76 34 62
+      " fill="none" stroke={c.stroke} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+
+      {/* Top horizontal seam */}
+      <path d="M 44 62 Q 110 73 176 62" fill="none" stroke={c.stroke} strokeWidth="0.9" strokeDasharray="3 3" opacity="0.6" />
+    </svg>
+  );
+};
+
+// Pillow tilted onto its long axis. Cube length kept same, width and height
+// swapped (cube is now narrower / taller).
+const PillowTiltedLength = ({ size = 84, active = true }: { size?: number; active?: boolean }) => {
+  const c = usePillowColors(active);
+  // Cube top: top(110,22) right(158,42) front(110,62) left(62,42). Depth 80.
+  return (
+    <svg viewBox="0 0 220 180" style={{ width: size, height: size }}>
+      <g opacity="0.4">
+        <path d="M110 22 L158 42 L110 62 L62 42 Z" fill="none" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <path d="M110 102 L158 122 L110 142 L62 122 Z" fill="none" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="110" y1="22" x2="110" y2="102" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="158" y1="42" x2="158" y2="122" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="110" y1="62" x2="110" y2="142" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="62"  y1="42" x2="62"  y2="122" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+      </g>
+      <path d="M 110 62 C 102 56 84 50 62 42 C 58 65 58 99 62 122 C 84 127 102 133 110 142 Z"
+        fill={c.left} opacity="0.85" />
+      <path d="M 110 62 C 118 56 136 50 158 42 C 162 65 162 99 158 122 C 136 127 118 133 110 142 Z"
+        fill={c.right} opacity="0.85" />
+      <path d="
+        M 110 22
+        C 120 28, 142 36, 158 42
+        C 142 48, 120 56, 110 62
+        C 100 56, 78 48, 62 42
+        C 78 36, 100 28, 110 22
+        Z
+      " fill={c.top} stroke={c.stroke} strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="
+        M 158 42
+        C 160 65 160 99 158 122
+        C 136 127 118 133 110 142
+        C 102 133 84 127 62 122
+        C 60 99 60 65 62 42
+      " fill="none" stroke={c.stroke} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M 70 42 Q 110 50 150 42" fill="none" stroke={c.stroke} strokeWidth="0.9" strokeDasharray="3 3" opacity="0.6" />
+    </svg>
+  );
+};
+
+// Pillow rotated 90° to stand on its short edge — tall and narrow.
+const PillowTiltedWidth = ({ size = 84, active = true }: { size?: number; active?: boolean }) => {
+  const c = usePillowColors(active);
+  return (
+    <svg viewBox="0 0 220 180" style={{ width: size, height: size }}>
+      <g opacity="0.4">
+        <path d="M110 16 L140 28 L110 40 L80 28 Z" fill="none" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <path d="M110 146 L140 158 L110 170 L80 158 Z" fill="none" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="110" y1="16" x2="110" y2="146" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="140" y1="28" x2="140" y2="158" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="110" y1="40" x2="110" y2="170" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="80"  y1="28" x2="80"  y2="158" stroke={c.cubeStroke} strokeWidth="1" strokeDasharray="3 3" />
+      </g>
+      <path d="M 110 40 C 105 36 92 32 80 28 C 76 60 76 130 80 158 C 92 161 105 165 110 170 Z"
+        fill={c.left} opacity="0.85" />
+      <path d="M 110 40 C 115 36 128 32 140 28 C 144 60 144 130 140 158 C 128 161 115 165 110 170 Z"
+        fill={c.right} opacity="0.85" />
+      <path d="
+        M 110 16
+        C 116 19, 130 25, 140 28
+        C 130 31, 116 37, 110 40
+        C 104 37, 90 31, 80 28
+        C 90 25, 104 19, 110 16
+        Z
+      " fill={c.top} stroke={c.stroke} strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="
+        M 140 28
+        C 142 60 142 130 140 158
+        C 128 161 115 165 110 170
+        C 105 165 92 161 80 158
+        C 78 130 78 60 80 28
+      " fill="none" stroke={c.stroke} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M 86 28 Q 110 32 134 28" fill="none" stroke={c.stroke} strokeWidth="0.9" strokeDasharray="3 3" opacity="0.6" />
+    </svg>
+  );
+};
+
+// Section 4 — 4 flat pillows stacked vertically, with optional Kg badge or height ruler
+const StackedPillowsIcon = ({ variant = 'plain' }: { variant?: 'plain' | 'mass' | 'height' }) => {
+  const stroke = '#7BA5F3';
+  const top = '#DBEAFE';
+  const right = '#A7C7FB';
+  const left = '#93C5FD';
+  const labelColor = '#3B82F6';
+
+  // Single small puffy pillow centered at (cx, cy_top).
+  // Diamond corners (top, right, bottom, left) → cubic bezier control points
+  // pulled toward center → concave edges → bulgy corners (cushion silhouette).
+  const Pillow = ({ cx, cy }: { cx: number; cy: number }) => (
+    <g>
+      {/* Front depth band — top edge follows the pillow's front-left and
+          front-right edges (concave inward), bottom edge is offset by 6px. */}
+      <path
+        d={`M ${cx - 26} ${cy + 8}
+            C ${cx - 18} ${cy + 11} ${cx - 9} ${cy + 13} ${cx} ${cy + 16}
+            C ${cx + 9} ${cy + 13} ${cx + 18} ${cy + 11} ${cx + 26} ${cy + 8}
+            L ${cx + 26} ${cy + 14}
+            C ${cx + 18} ${cy + 17} ${cx + 9} ${cy + 19} ${cx} ${cy + 22}
+            C ${cx - 9} ${cy + 19} ${cx - 18} ${cy + 17} ${cx - 26} ${cy + 14}
+            Z`}
+        fill={left}
+        stroke={stroke}
+        strokeWidth="0.9"
+        strokeLinejoin="round"
+      />
+      {/* Top puffy face — concave edges, bulgy corners. Control points pull
+          toward the pillow's center (cx, cy+8). */}
+      <path
+        d={`M ${cx} ${cy}
+            C ${cx + 9} ${cy + 3} ${cx + 18} ${cy + 5} ${cx + 26} ${cy + 8}
+            C ${cx + 18} ${cy + 11} ${cx + 9} ${cy + 13} ${cx} ${cy + 16}
+            C ${cx - 9} ${cy + 13} ${cx - 18} ${cy + 11} ${cx - 26} ${cy + 8}
+            C ${cx - 18} ${cy + 5} ${cx - 9} ${cy + 3} ${cx} ${cy}
+            Z`}
+        fill={top}
+        stroke={stroke}
+        strokeWidth="0.9"
+        strokeLinejoin="round"
+      />
+      {/* Right side accent — slightly darker right wedge for depth */}
+      <path
+        d={`M ${cx + 18} ${cy + 11}
+            C ${cx + 22} ${cy + 13} ${cx + 25} ${cy + 14} ${cx + 26} ${cy + 14}
+            L ${cx + 26} ${cy + 8}
+            C ${cx + 22} ${cy + 9} ${cx + 18} ${cy + 11} ${cx + 18} ${cy + 11}
+            Z`}
+        fill={right}
+        stroke={stroke}
+        strokeWidth="0.9"
+        strokeLinejoin="round"
+      />
+    </g>
+  );
+
+  return (
+    <svg viewBox="0 0 100 100" className="h-20 w-20 flex-shrink-0">
+      {/* 4 puffy pillows stacked vertically (back-to-front order) */}
+      <Pillow cx={50} cy={56} />
+      <Pillow cx={50} cy={42} />
+      <Pillow cx={50} cy={28} />
+      <Pillow cx={50} cy={14} />
+
+      {/* Mass: Kg bag badge attached at top */}
+      {variant === 'mass' && (
+        <g>
+          <rect x="38" y="0" width="24" height="20" rx="2" fill="white" stroke={stroke} strokeWidth="1.2" />
+          <path d="M42 0 C42 -6, 58 -6, 58 0" fill="none" stroke={stroke} strokeWidth="1" strokeLinecap="round" />
+          <text x="50" y="14" fill={labelColor} fontSize="9" fontWeight="700" textAnchor="middle">Kg</text>
+        </g>
+      )}
+
+      {/* Height: vertical ruler with arrowheads + tick marks */}
+      {variant === 'height' && (
+        <g>
+          <line x1="6" y1="14" x2="6" y2="82" stroke={stroke} strokeWidth="1" />
+          <path d="M3 17 L6 14 L9 17" fill="none" stroke={stroke} strokeWidth="1" strokeLinecap="round" />
+          <path d="M3 79 L6 82 L9 79" fill="none" stroke={stroke} strokeWidth="1" strokeLinecap="round" />
+          <line x1="4" y1="30" x2="8" y2="30" stroke={stroke} strokeWidth="1" />
+          <line x1="4" y1="46" x2="8" y2="46" stroke={stroke} strokeWidth="1" />
+          <line x1="4" y1="64" x2="8" y2="64" stroke={stroke} strokeWidth="1" />
+        </g>
+      )}
+    </svg>
+  );
+};
+
+const SackCargoForm = ({ onClose, onAdd, initialData }: SackCargoFormProps) => {
+  const isEdit = !!initialData;
   const [form, setForm] = useState({
-    productName: 'New Product',
-    colour: '#1bb24b',
-    length: '100',
-    width: '100',
-    height: '100',
-    weight: '100',
-    quantity: '100',
+    productName: initialData?.productName ?? 'new product',
+    colour: initialData?.colour ?? '#c93c8a',
+    length: initialData?.length ?? '100',
+    width: initialData?.width ?? '100',
+    height: initialData?.height ?? '100',
+    weight: initialData?.weight ?? '1',
+    quantity: initialData?.quantity ?? '1',
   });
 
   const [spacing, setSpacing] = useState({
-    tiltLength: false,
-    tiltWidth: false,
-    tiltHeight: false,
+    tiltLength: !!initialData?.spacingSettings?.tiltToLength,
+    tiltWidth: !!initialData?.spacingSettings?.tiltToWidth,
   });
 
   const [advancedSpacing, setAdvancedSpacing] = useState({
-    layerCount: false,
-    mass: false,
-    height: false,
-    disableStacking: false,
+    layerCount: initialData?.stuffingSettings?.layersCount !== undefined,
+    mass: initialData?.stuffingSettings?.mass !== undefined,
+    height: initialData?.stuffingSettings?.height !== undefined,
+    disableStacking: !!initialData?.stuffingSettings?.disableStacking,
   });
 
   const [advancedValues, setAdvancedValues] = useState({
-    layerCount: '',
-    mass: '0',
-    height: '0',
+    layerCount:
+      initialData?.stuffingSettings?.layersCount !== undefined
+        ? String(initialData.stuffingSettings.layersCount)
+        : '0',
+    mass:
+      initialData?.stuffingSettings?.mass !== undefined
+        ? String(initialData.stuffingSettings.mass)
+        : '0',
+    height:
+      initialData?.stuffingSettings?.height !== undefined
+        ? String(initialData.stuffingSettings.height)
+        : '0',
   });
 
   const updateForm = (key: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
-
   const toggleSpacing = (key: keyof typeof spacing) => {
     setSpacing((prev) => ({ ...prev, [key]: !prev[key] }));
   };
-
   const toggleAdvancedSpacing = (key: keyof typeof advancedSpacing) => {
-    setAdvancedSpacing((prev) => ({ ...prev, [key]: !prev[key] }));
+    // Stuffing options are mutually exclusive: turning one on clears the others.
+    setAdvancedSpacing((prev) => {
+      const turningOn = !prev[key];
+      const cleared = {
+        layerCount: false,
+        mass: false,
+        height: false,
+        disableStacking: false,
+      };
+      return turningOn ? { ...cleared, [key]: true } : cleared;
+    });
   };
-
   const updateAdvancedValue = (key: keyof typeof advancedValues, value: string) => {
     setAdvancedValues((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleAdd = () => {
+    onAdd?.({
+      type: 'sacks',
+      ...form,
+      spacingSettings: {
+        tiltToLength: spacing.tiltLength,
+        tiltToWidth: spacing.tiltWidth,
+      },
+      stuffingSettings: {
+        ...(advancedSpacing.layerCount && {
+          layersCount: parseInt(advancedValues.layerCount, 10) || 0,
+        }),
+        ...(advancedSpacing.mass && {
+          mass: parseFloat(advancedValues.mass) || 0,
+        }),
+        ...(advancedSpacing.height && {
+          height: parseFloat(advancedValues.height) || 0,
+        }),
+        ...(advancedSpacing.disableStacking && { disableStacking: true }),
+      },
+    });
+    onClose();
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Section 2: Dimensions */}
-      <section>
-        <div className="mb-4 text-sm font-medium text-gray-600">2. SELECT CARGO dimensions</div>
-        
+    <div className="space-y-5">
+      {/* Section 2 — Dimensions */}
+      <section className="rounded-2xl bg-gray-50/70 p-5">
+        <div className="mb-4 text-sm font-bold uppercase tracking-wide text-gray-700">
+          <span className="text-blue-500">2.</span> SELECT CARGO DIMENSIONS
+        </div>
+
         <div className="grid gap-6 lg:grid-cols-[200px_1fr]">
-          {/* 3D Sack Illustration */}
-          <div className="flex items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/30 p-6">
-            <svg viewBox="0 0 220 250" className="h-52 w-52">
-              <defs>
-                <linearGradient id="sackTop" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#E0ECFF" />
-                  <stop offset="50%" stopColor="#C6DBFE" />
-                  <stop offset="100%" stopColor="#A7C7FB" />
-                </linearGradient>
-              </defs>
+          {/* Flat pillow with dashed bounding cube + dimension labels.
+              Geometry (viewBox 280×240):
+                Cube top rhombus:    top(140,50) right(220,90) front(140,130) left(60,90)
+                Cube bottom rhombus: top(140,110) right(220,150) front(140,190) left(60,150)
+                Cube depth: 60 px
+              The pillow's top face matches the cube's top rhombus (so its 4
+              corners sit at the cube's top corners, giving a clear diamond
+              silhouette). Cubic bezier control points sit very close to each
+              corner, so segments stay near-straight (= visible diamond, not
+              a smoothed-out oval). */}
+          <div className="flex items-center justify-center">
+            <svg viewBox="0 0 280 240" className="h-48 w-48">
+              {/* Dashed bounding cube */}
+              <g opacity="0.65">
+                <path d="M140 50 L220 90 L140 130 L60 90 Z" fill="none" stroke="#9CA3AF" strokeWidth="1.2" strokeDasharray="4 3" />
+                <path d="M140 110 L220 150 L140 190 L60 150 Z" fill="none" stroke="#9CA3AF" strokeWidth="1.2" strokeDasharray="4 3" />
+                <line x1="140" y1="50"  x2="140" y2="110" stroke="#9CA3AF" strokeWidth="1.2" strokeDasharray="4 3" />
+                <line x1="220" y1="90"  x2="220" y2="150" stroke="#9CA3AF" strokeWidth="1.2" strokeDasharray="4 3" />
+                <line x1="140" y1="130" x2="140" y2="190" stroke="#9CA3AF" strokeWidth="1.2" strokeDasharray="4 3" />
+                <line x1="60"  y1="90"  x2="60"  y2="150" stroke="#9CA3AF" strokeWidth="1.2" strokeDasharray="4 3" />
+              </g>
 
-              {/* Base shadow */}
-              <ellipse cx="110" cy="205" rx="65" ry="18" fill="#E5E7EB" opacity="0.5" />
-
-              {/* Pillow body */}
+              {/* Depth shading — front-left and front-right bands.
+                  Semi-transparent fills give 3D depth without being separate
+                  panels with visible joins. */}
               <path
-                d="M60 95 Q60 70 110 60 Q160 70 160 95 L160 165 Q160 190 110 200 Q60 190 60 165 Z"
-                fill="#CFE1FF"
-                stroke="#8CB4F8"
-                strokeWidth="2"
+                d="M 140 130 C 126 117 98 105 60 90 C 54 108 54 132 60 150 C 98 157 126 171 140 190 Z"
+                fill="#93C5FD"
+                opacity="0.85"
+              />
+              <path
+                d="M 140 130 C 154 117 182 105 220 90 C 226 108 226 132 220 150 C 182 157 154 171 140 190 Z"
+                fill="#A7C7FB"
+                opacity="0.85"
               />
 
-              {/* Top ellipse */}
-              <ellipse cx="110" cy="90" rx="55" ry="22" fill="url(#sackTop)" stroke="#8CB4F8" strokeWidth="2" />
+              {/* TOP face — soft cushion. Subtle concavity (15% pull toward
+                  center), so corners visibly bulge but the shape doesn't
+                  pinch into a UFO. */}
+              <path
+                d="
+                  M 140 50
+                  C 158 60, 196 80, 220 90
+                  C 196 100, 158 120, 140 130
+                  C 122 120, 84 100, 60 90
+                  C 84 80, 122 60, 140 50
+                  Z
+                "
+                fill="#DBEAFE"
+                stroke="#7BA5F3"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
 
-              {/* Mid dashed seam */}
-              <path d="M65 150 Q110 165 155 150" fill="none" stroke="#8CB4F8" strokeWidth="1.2" strokeDasharray="4 4" opacity="0.6" />
+              {/* Outer silhouette stroke — pillow's outer boundary, with
+                  subtle outward bulges on the sides. */}
+              <path
+                d="
+                  M 220 90
+                  C 224 108 224 132 220 150
+                  C 182 157 154 171 140 190
+                  C 126 171 98 157 60 150
+                  C 56 132 56 108 60 90
+                "
+                fill="none"
+                stroke="#7BA5F3"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+              {/* Top center seam — runs across the top face horizontally */}
+              <path d="M 70 90 Q 140 110 210 90" fill="none" stroke="#7BA5F3" strokeWidth="1" strokeDasharray="4 3" opacity="0.55" />
 
-              {/* Side dotted seams */}
-              <path d="M80 85 L80 170" stroke="#8CB4F8" strokeWidth="1" strokeDasharray="4 4" opacity="0.4" />
-              <path d="M140 85 L140 170" stroke="#8CB4F8" strokeWidth="1" strokeDasharray="4 4" opacity="0.4" />
+              {/* Dimension labels with extension lines (positions tied to the
+                  cube above: top-rhombus y=50–130, bottom-rhombus y=110–190) */}
+              {/* Height — vertical, left side of cube */}
+              <line x1="38" y1="90" x2="38" y2="150" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="3 3" />
+              <line x1="38" y1="90"  x2="60" y2="90"  stroke="#9CA3AF" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+              <line x1="38" y1="150" x2="60" y2="150" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+              <text x="20" y="124" fill="#6B7280" fontSize="11" fontWeight="500">Height</text>
 
-              {/* Dimension arrows */}
-              {/* Height */}
-              <line x1="35" y1="95" x2="35" y2="170" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="3 3" />
-              <line x1="31" y1="95" x2="39" y2="95" stroke="#9CA3AF" strokeWidth="1" />
-              <line x1="31" y1="170" x2="39" y2="170" stroke="#9CA3AF" strokeWidth="1" />
-              <text x="20" y="135" fill="#9CA3AF" fontSize="10" fontWeight="500">Height</text>
+              {/* Width — bottom-left diagonal */}
+              <line x1="48" y1="170" x2="135" y2="212" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="3 3" />
+              <line x1="48" y1="170" x2="60" y2="150"  stroke="#9CA3AF" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+              <line x1="135" y1="212" x2="140" y2="190" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+              <text x="76" y="224" fill="#6B7280" fontSize="11" fontWeight="500">Width</text>
 
-              {/* Width */}
-              <line x1="60" y1="215" x2="160" y2="215" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="3 3" />
-              <line x1="60" y1="212" x2="60" y2="218" stroke="#9CA3AF" strokeWidth="1" />
-              <line x1="160" y1="212" x2="160" y2="218" stroke="#9CA3AF" strokeWidth="1" />
-              <text x="110" y="232" fill="#9CA3AF" fontSize="10" fontWeight="500" textAnchor="middle">Width</text>
-
-              {/* Length */}
-              <line x1="175" y1="125" x2="205" y2="125" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="3 3" />
-              <line x1="175" y1="122" x2="175" y2="128" stroke="#9CA3AF" strokeWidth="1" />
-              <line x1="205" y1="122" x2="205" y2="128" stroke="#9CA3AF" strokeWidth="1" />
-              <text x="190" y="116" fill="#9CA3AF" fontSize="10" fontWeight="500" textAnchor="middle">Length</text>
+              {/* Length — bottom-right diagonal */}
+              <line x1="232" y1="170" x2="145" y2="212" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="3 3" />
+              <line x1="232" y1="170" x2="220" y2="150" stroke="#9CA3AF" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+              <text x="176" y="224" fill="#6B7280" fontSize="11" fontWeight="500">Length</text>
             </svg>
           </div>
 
           {/* Form Fields */}
           <div className="grid gap-4">
-            {/* Product Name and Colour */}
             <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-2">
                 <span className="text-xs font-medium text-gray-500">Product Name</span>
                 <input
                   type="text"
-                  placeholder="New Product"
-                  className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="new product"
                   value={form.productName}
                   onChange={(e) => updateForm('productName', e.target.value)}
+                  className="rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </label>
               <label className="grid gap-2">
-                <span className="text-xs font-medium text-gray-500">Colour</span>
+                <span className="text-xs font-medium text-gray-500">Color</span>
                 <div className="relative">
-                  <input
-                    type="text"
-                    value={form.colour}
-                    onChange={(e) => updateForm('colour', e.target.value)}
-                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 pr-12 text-sm text-gray-900 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  <div
+                    className="h-10 w-full rounded-full border border-gray-200"
+                    style={{ backgroundColor: form.colour }}
                   />
                   <input
                     type="color"
                     value={form.colour}
                     onChange={(e) => updateForm('colour', e.target.value)}
-                    className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 cursor-pointer rounded border-0"
+                    className="absolute inset-0 h-full w-full cursor-pointer rounded-full opacity-0"
+                    aria-label="Select colour"
                   />
                 </div>
               </label>
             </div>
 
-            {/* Dimensions Row */}
             <div className="grid gap-4 md:grid-cols-3">
-              {['length', 'width', 'height'].map((dimension) => (
-                <label key={dimension} className="grid gap-2">
-                  <span className="text-xs font-medium capitalize text-gray-500">{dimension}</span>
-                  <div className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20">
+              {(['length', 'width', 'height'] as const).map((dim) => (
+                <label key={dim} className="grid gap-2">
+                  <span className="text-xs font-medium capitalize text-gray-500">{dim}</span>
+                  <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20">
                     <input
                       type="number"
                       placeholder="100"
-                      value={form[dimension as 'length' | 'width' | 'height']}
-                      onChange={(e) => updateForm(dimension as keyof typeof form, e.target.value)}
+                      value={form[dim]}
+                      onChange={(e) => updateForm(dim, e.target.value)}
                       className="flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
                     />
                     <span className="text-xs font-medium text-gray-500">mm</span>
@@ -162,38 +493,36 @@ const SackCargoForm = ({ onClose }: SackCargoFormProps) => {
               ))}
             </div>
 
-            {/* Weight, Quantity, Prediction Row */}
             <div className="grid gap-4 md:grid-cols-3">
               <label className="grid gap-2">
                 <span className="text-xs font-medium text-gray-500">Weight</span>
-                <div className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20">
+                <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20">
                   <input
                     type="number"
-                    placeholder="100"
+                    placeholder="1"
                     value={form.weight}
                     onChange={(e) => updateForm('weight', e.target.value)}
                     className="flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
                   />
-                  <span className="text-xs font-medium text-gray-500">mm</span>
+                  <span className="text-xs font-medium text-gray-500">kg</span>
                 </div>
               </label>
               <label className="grid gap-2">
                 <span className="text-xs font-medium text-gray-500">Quantity</span>
-                <div className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20">
+                <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20">
                   <input
                     type="number"
-                    placeholder="100"
+                    placeholder="1"
                     value={form.quantity}
                     onChange={(e) => updateForm('quantity', e.target.value)}
                     className="flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
                   />
-                  <span className="text-xs font-medium text-gray-500">mm</span>
                 </div>
               </label>
               <div className="flex items-end">
                 <button
                   type="button"
-                  className="w-full rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-600 transition hover:bg-blue-100"
+                  className="w-full rounded-full bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-600 transition hover:bg-blue-100"
                 >
                   Prediction
                 </button>
@@ -203,132 +532,173 @@ const SackCargoForm = ({ onClose }: SackCargoFormProps) => {
         </div>
       </section>
 
-      {/* Sections 3 & 4: Spacing Settings */}
-      <section className="grid gap-6 border-t border-gray-200 pt-6 lg:grid-cols-[1fr_auto_1fr]">
-        {/* Section 3 */}
-        <div>
-          <div className="mb-4 text-sm font-medium text-gray-600">3. SPACING SETTINGS ?</div>
+      {/* Sections 3 & 4 */}
+      <section className="grid gap-5 lg:grid-cols-2">
+        {/* Section 3 — Spacing Settings */}
+        <div className="rounded-2xl bg-gray-50/70 p-5">
+          <div className="mb-4 text-sm font-bold uppercase tracking-wide text-gray-700">
+            <span className="text-blue-500">3.</span> SPACING SETTINGS{' '}
+            <span className="text-gray-400">?</span>
+          </div>
           <div className="space-y-4">
-            {[
-              { key: 'tiltLength', label: 'Tilt to Length' },
-              { key: 'tiltWidth', label: 'Tilt to Widht' },
-              { key: 'tiltHeight', label: 'Tilt to Height' },
-            ].map((option) => (
-              <label key={option.key} className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={spacing[option.key as keyof typeof spacing]}
-                  onChange={() => toggleSpacing(option.key as keyof typeof spacing)}
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
-                />
-                <div className="flex flex-1 flex-col gap-3">
-                  <span className="text-sm font-medium text-gray-500">{option.label}</span>
-                  {/* Sack transformation illustrations */}
-                  <div className="flex items-center gap-2">
-                    <svg viewBox="0 0 110 80" className="h-18 w-24">
-                      <path d="M25 30 Q25 18 55 12 Q85 18 85 30 L85 48 Q85 60 55 65 Q25 60 25 48 Z" fill="#DBEAFE" stroke="#8CB4F8" strokeWidth="1.2" />
-                      <ellipse cx="55" cy="28" rx="32" ry="12" fill="#BFDBFE" stroke="#8CB4F8" strokeWidth="1.2" />
-                      <path d="M30 48 Q55 54 80 48" fill="none" stroke="#8CB4F8" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
-                      <line x1="18" y1="30" x2="18" y2="55" stroke="#9CA3AF" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.7" />
-                      <line x1="32" y1="63" x2="78" y2="63" stroke="#9CA3AF" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.7" />
+            {([
+              { key: 'tiltLength', label: 'Tilt to Length', After: PillowTiltedLength },
+              { key: 'tiltWidth', label: 'Tilt to Width', After: PillowTiltedWidth },
+            ] as const).map((option) => {
+              const checked = spacing[option.key as keyof typeof spacing];
+              const After = option.After;
+              return (
+                <div key={option.key} className="space-y-2">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleSpacing(option.key as keyof typeof spacing)}
+                      className="h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                    />
+                    {option.label}
+                  </label>
+                  <div className="flex items-center gap-3 pl-6">
+                    {/* Before — flat pillow with bounding cube */}
+                    <PillowFlat size={84} active={checked} />
+                    {/* Arrow */}
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 flex-shrink-0">
+                      <path
+                        d="M6 12 L18 12 M15 9 L18 12 L15 15"
+                        stroke={checked ? '#60A5FA' : '#9CA3AF'}
+                        strokeWidth="1.5"
+                        fill="none"
+                        strokeLinecap="round"
+                      />
                     </svg>
-                    <svg viewBox="0 0 24 24" className="h-5 w-5">
-                      <path d="M6 12 L18 12 M15 9 L18 12 L15 15" stroke="#93C5FD" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                    </svg>
-                    <svg viewBox="0 0 80 100" className="h-20 w-18">
-                      <path d="M25 40 Q25 30 40 25 Q55 30 55 40 L55 70 Q55 80 40 85 Q25 80 25 70 Z" fill="#DBEAFE" stroke="#8CB4F8" strokeWidth="1.2" />
-                      <ellipse cx="40" cy="38" rx="18" ry="8" fill="#BFDBFE" stroke="#8CB4F8" strokeWidth="1.2" />
-                      <path d="M28 65 Q40 70 52 65" fill="none" stroke="#8CB4F8" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
-                      <line x1="20" y1="40" x2="20" y2="78" stroke="#9CA3AF" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.7" />
-                      <line x1="60" y1="42" x2="67" y2="42" stroke="#9CA3AF" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.7" />
-                    </svg>
+                    {/* After — pillow rotated for the chosen tilt axis */}
+                    <After size={84} active={checked} />
                   </div>
                 </div>
-              </label>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* Vertical Divider */}
-        <div className="hidden lg:block w-px bg-gray-200"></div>
-
-        {/* Section 4 */}
-        <div>
-          <div className="mb-4 text-sm font-medium text-gray-600">4. SPACING SETTINGS ?</div>
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              { key: 'layerCount', label: 'Layer Count', unit: null, hasInput: true, valueKey: 'layerCount' },
-              { key: 'mass', label: 'Mass', unit: 'Kg', hasInput: true, valueKey: 'mass' },
-              { key: 'height', label: 'Height', unit: 'mm', hasInput: true, valueKey: 'height' },
-              { key: 'disableStacking', label: 'Disable stacking', unit: null, hasInput: false, valueKey: null },
-            ].map((option) => (
-              <label key={option.key} className="flex flex-col items-center gap-3">
-                {/* Stacked sacks icon - 3D isometric */}
-                <svg viewBox="0 0 90 110" className="h-28 w-24">
-                  {/* Bottom sack - gray */}
-                  <path d="M25 70 L25 88 L45 98 L45 80 Z" fill="#D1D5DB" stroke="#9CA3AF" strokeWidth="1.2" />
-                  <path d="M45 80 L45 98 L65 88 L65 70 Z" fill="#E5E7EB" stroke="#9CA3AF" strokeWidth="1.2" />
-                  <path d="M25 70 L45 80 L65 70 L45 60 Z" fill="#D1D5DB" stroke="#9CA3AF" strokeWidth="1.2" />
-                  
-                  {/* Middle sack - light blue */}
-                  <path d="M25 45 L25 63 L45 73 L45 55 Z" fill="#93C5FD" stroke="#60A5FA" strokeWidth="1.2" />
-                  <path d="M45 55 L45 73 L65 63 L65 45 Z" fill="#DBEAFE" stroke="#60A5FA" strokeWidth="1.2" />
-                  <path d="M25 45 L45 55 L65 45 L45 35 Z" fill="#BFDBFE" stroke="#60A5FA" strokeWidth="1.2" />
-                  
-                  {/* Top sack - blue with handle */}
-                  <path d="M25 20 L25 38 L45 48 L45 30 Z" fill="#93C5FD" stroke="#60A5FA" strokeWidth="1.2" />
-                  <path d="M45 30 L45 48 L65 38 L65 20 Z" fill="#DBEAFE" stroke="#60A5FA" strokeWidth="1.2" />
-                  <path d="M25 20 L45 30 L65 20 L45 10 Z" fill="#BFDBFE" stroke="#60A5FA" strokeWidth="1.2" />
-                  
-                  {/* Handle on top sack */}
-                  <path d="M40 10 L40 5 L50 5 L50 10" fill="none" stroke="#60A5FA" strokeWidth="1.5" strokeLinecap="round" />
-                  <circle cx="40" cy="7" r="2" fill="#93C5FD" stroke="#60A5FA" strokeWidth="1" />
-                  <circle cx="50" cy="7" r="2" fill="#93C5FD" stroke="#60A5FA" strokeWidth="1" />
-                </svg>
-
-                <div className="flex w-full items-center gap-2">
+        {/* Section 4 — Stuffing Settings */}
+        <div className="rounded-2xl bg-gray-50/70 p-5">
+          <div className="mb-4 text-sm font-bold uppercase tracking-wide text-gray-700">
+            <span className="text-blue-500">4.</span> STUFFING SETTINGS{' '}
+            <span className="text-gray-400">?</span>
+          </div>
+          <div className="grid grid-cols-2 gap-x-5 gap-y-5">
+            {/* Layers Count */}
+            <div className="flex items-center gap-3">
+              <StackedPillowsIcon variant="plain" />
+              <div className="flex-1 space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
                   <input
                     type="checkbox"
-                    checked={advancedSpacing[option.key as keyof typeof advancedSpacing]}
-                    onChange={() => toggleAdvancedSpacing(option.key as keyof typeof advancedSpacing)}
-                    className="h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                    checked={advancedSpacing.layerCount}
+                    onChange={() => toggleAdvancedSpacing('layerCount')}
+                    className="h-4 w-4 flex-shrink-0 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
                   />
-                  <span className="flex-1 text-sm font-medium text-gray-500">{option.label}</span>
+                  Layers Count
+                </label>
+                <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20">
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={advancedValues.layerCount}
+                    onChange={(e) => updateAdvancedValue('layerCount', e.target.value)}
+                    disabled={!advancedSpacing.layerCount}
+                    className="flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:text-gray-400"
+                  />
                 </div>
+              </div>
+            </div>
 
-                {option.hasInput && (
-                  <div className="flex w-full items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20">
-                    <input
-                      type="number"
-                      placeholder="0"
-                      value={option.valueKey ? advancedValues[option.valueKey as keyof typeof advancedValues] : '0'}
-                      onChange={(e) => option.valueKey && updateAdvancedValue(option.valueKey as keyof typeof advancedValues, e.target.value)}
-                      disabled={!advancedSpacing[option.key as keyof typeof advancedSpacing]}
-                      className="flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:text-gray-400"
-                    />
-                    {option.unit && <span className="text-xs font-medium text-gray-500">{option.unit}</span>}
-                  </div>
-                )}
+            {/* Mass */}
+            <div className="flex items-center gap-3">
+              <StackedPillowsIcon variant="mass" />
+              <div className="flex-1 space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={advancedSpacing.mass}
+                    onChange={() => toggleAdvancedSpacing('mass')}
+                    className="h-4 w-4 flex-shrink-0 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                  />
+                  Mass
+                </label>
+                <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20">
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={advancedValues.mass}
+                    onChange={(e) => updateAdvancedValue('mass', e.target.value)}
+                    disabled={!advancedSpacing.mass}
+                    className="flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:text-gray-400"
+                  />
+                  <span className="text-xs font-medium text-gray-500">kg</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Height */}
+            <div className="flex items-center gap-3">
+              <StackedPillowsIcon variant="height" />
+              <div className="flex-1 space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={advancedSpacing.height}
+                    onChange={() => toggleAdvancedSpacing('height')}
+                    className="h-4 w-4 flex-shrink-0 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                  />
+                  Height
+                </label>
+                <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20">
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={advancedValues.height}
+                    onChange={(e) => updateAdvancedValue('height', e.target.value)}
+                    disabled={!advancedSpacing.height}
+                    className="flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:text-gray-400"
+                  />
+                  <span className="text-xs font-medium text-gray-500">mm</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Disable stacking */}
+            <div className="flex items-center gap-3">
+              <div className="h-20 w-20 flex-shrink-0" />
+              <label className="flex flex-1 items-center gap-2 text-sm font-medium text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={advancedSpacing.disableStacking}
+                  onChange={() => toggleAdvancedSpacing('disableStacking')}
+                  className="h-4 w-4 flex-shrink-0 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                />
+                Disable stacking
               </label>
-            ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Footer Buttons */}
-      <div className="flex items-center justify-center gap-3 border-t border-gray-200 pt-6">
+      {/* Footer */}
+      <div className="flex items-center justify-center gap-4 pt-2">
         <button
           type="button"
           onClick={onClose}
-          className="rounded-xl bg-gray-100 px-8 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-200"
+          className="rounded-lg bg-blue-50 px-10 py-2.5 text-sm font-semibold text-blue-500 transition hover:bg-blue-100"
         >
           Cancel
         </button>
         <button
           type="button"
-          className="rounded-xl bg-blue-500 px-12 py-3 text-sm font-semibold text-white transition hover:bg-blue-600"
+          onClick={handleAdd}
+          className="rounded-lg bg-blue-500 px-12 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600"
         >
-          Add
+          {isEdit ? 'Update' : 'Add'}
         </button>
       </div>
     </div>

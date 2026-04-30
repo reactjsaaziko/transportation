@@ -34,6 +34,7 @@ export interface ContainerDetail {
   };
   description: string;
   highlights: string[];
+  additionalInfo?: string;
 }
 
 export const CONTAINER_OPTIONS: ContainerOption[] = [
@@ -68,13 +69,13 @@ export const CONTAINER_DETAILS: Record<string, ContainerDetail> = {
       tareWeight: '2230 Kgs',
       maxCargoWeight: '28230 Kgs',
     },
-    description: 'Standard containers are also known as general purpose containers',
+    description: 'Standard containers are also known as general purpose containers\n\nThey are closed containers, i.e. they are closed on all sides. A distinction may be drawn between the following types of standard container:',
     highlights: [
       'Standard containers with doors at one or both end(s)',
       'Standard containers with doors at one or both end(s) and doors over the entire length of one or both sides',
       'Standard containers with doors at one or both end(s) and doors on one or both sides',
-      'In addition, the various types of standard container also differ in dimensions and weight, resulting in a wide range of standard containers.',
     ],
+    additionalInfo: 'In addition, the various types of standard container also differ in dimensions and weight, resulting in a wide range of standard containers.\n\nStandard containers',
   },
   '40-standard': {
     metrics: {
